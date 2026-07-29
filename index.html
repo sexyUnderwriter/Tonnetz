@@ -50,8 +50,8 @@
     .tonnetz-stage {
       position: relative;
       width: 100%;
-      height: min(74vh, 860px);
-      min-height: 520px;
+      height: min(82vh, 980px);
+      min-height: 620px;
     }
 
     .path-controls {
@@ -376,12 +376,28 @@
       stroke: rgba(31, 40, 51, 0.58);
       stroke-width: 1.4;
     }
+
+    .triad-label {
+      font-size: clamp(9px, 0.9vw, 12px);
+      fill: rgba(31, 40, 51, 0.68);
+      text-anchor: middle;
+      dominant-baseline: middle;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      pointer-events: none;
+      transition: fill 120ms ease;
+    }
+
+    .triad-label-selected {
+      fill: #111a22;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
   <div class="frame">
     <div class="tonnetz-stage">
-      <svg id="tonnetz" viewBox="0 0 1200 850" role="img" aria-label="Tonnetz triangle grid centered on middle C with basset, tenor, alto, and soprano recorder ranges">
+      <svg id="tonnetz" viewBox="0 0 1400 980" role="img" aria-label="Tonnetz triangle grid centered on middle C with basset, tenor, alto, and soprano recorder ranges">
         <defs>
           <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#101923" flood-opacity="0.2" />
@@ -437,8 +453,8 @@
       const playbackSourceSelect = document.getElementById("playbackSource");
       const scorePreview = document.getElementById("scorePreview");
       const triadPreview = document.getElementById("triadPreview");
-      const width = 1200;
-      const height = 850;
+      const width = 1400;
+      const height = 980;
       const HEADER_BAND = 140;
       const SIDE_MARGIN = 40;
       const BOTTOM_MARGIN = 60;
@@ -457,9 +473,9 @@
 
       const CENTER_X = width / 2;
       const CENTER_Y = (HEADER_BAND + (height - BOTTOM_MARGIN)) / 2;
-      const SPACING = 68;
+      const SPACING = 76;
       const SQRT3 = Math.sqrt(3);
-      const RADIUS = 16;
+      const RADIUS = 18;
 
       const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
       const musicXmlPitchMap = [
@@ -492,6 +508,65 @@
           alter: pitch.alter,
           octave
         };
+      }
+
+      function midiToPitchClassName(midi) {
+        const pc = ((midi % 12) + 12) % 12;
+        return pitchNames[pc];
+      }
+
+      function detectTriadQuality(pcs, rootPc) {
+        const intervals = pcs.map((pc) => ((pc - rootPc) + 12) % 12);
+        const has = (target) => intervals.includes(target);
+
+        if (has(0) && has(4) && has(7)) {
+          return "";
+        }
+        if (has(0) && has(3) && has(7)) {
+          return "m";
+        }
+        if (has(0) && has(3) && has(6)) {
+          return "dim";
+        }
+        if (has(0) && has(4) && has(8)) {
+          return "aug";
+        }
+        return null;
+      }
+
+      function buildTriadChordLabel(nodeKeys) {
+        const triadNodes = nodeKeys.map((nodeKey) => nodes.get(nodeKey)).filter(Boolean);
+        if (triadNodes.length < 3) {
+          return "";
+        }
+
+        const bassPc = ((triadNodes[0].midi % 12) + 12) % 12;
+        const uniquePcs = Array.from(new Set(triadNodes.map((node) => ((node.midi % 12) + 12) % 12)));
+
+        let rootPc = null;
+        let quality = null;
+        uniquePcs.forEach((candidatePc) => {
+          if (quality !== null) {
+            return;
+          }
+          const detected = detectTriadQuality(uniquePcs, candidatePc);
+          if (detected !== null) {
+            rootPc = candidatePc;
+            quality = detected;
+          }
+        });
+
+        if (rootPc === null || quality === null) {
+          return triadNodes.map((node) => midiToPitchClassName(node.midi)).join("-");
+        }
+
+        const rootName = pitchNames[rootPc];
+        const bassName = pitchNames[bassPc];
+        const baseSymbol = `${rootName}${quality}`;
+        if (bassPc === rootPc) {
+          return baseSymbol;
+        }
+        return `${baseSymbol}/${bassName}`;
       }
 
       function buildRouteMusicXmlFromKeys(noteKeys) {
@@ -814,6 +889,7 @@
       });
 
       const triangleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const triadTextGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const edgeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const rangeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -857,11 +933,11 @@
       });
 
       triangles.forEach((triangle) => {
-        const points = triangle.nodeKeys
+        const triangleNodes = triangle.nodeKeys
           .map((nodeKey) => nodes.get(nodeKey))
-          .filter(Boolean)
-          .map((node) => `${node.x},${node.y}`)
-          .join(" ");
+          .filter(Boolean);
+
+        const points = triangleNodes.map((node) => `${node.x},${node.y}`).join(" ");
 
         const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
         polygon.setAttribute("points", points);
@@ -871,10 +947,21 @@
         const uniqueSortedKeys = [...triangle.nodeKeys]
           .sort((left, right) => (nodes.get(left).midi - nodes.get(right).midi));
 
+        const centroidX = triangleNodes.reduce((sum, node) => sum + node.x, 0) / triangleNodes.length;
+        const centroidY = triangleNodes.reduce((sum, node) => sum + node.y, 0) / triangleNodes.length;
+
+        const triadLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        triadLabel.setAttribute("x", centroidX);
+        triadLabel.setAttribute("y", centroidY + 0.3);
+        triadLabel.setAttribute("class", "triad-label");
+        triadLabel.textContent = buildTriadChordLabel(uniqueSortedKeys);
+        triadTextGroup.appendChild(triadLabel);
+
         const record = {
           id: triangle.id,
           nodeKeys: uniqueSortedKeys,
-          polygon
+          polygon,
+          triadLabel
         };
 
         trianglesById.set(triangle.id, record);
@@ -1387,6 +1474,7 @@
 
         triangleVisuals.forEach((triangleVisual) => {
           triangleVisual.polygon.classList.toggle("tri-face-selected", selectedSet.has(triangleVisual.id));
+          triangleVisual.triadLabel.classList.toggle("triad-label-selected", selectedSet.has(triangleVisual.id));
         });
 
         triadPlaybackEvents = selectedTriangleIds
@@ -1481,6 +1569,7 @@
       });
 
       svg.appendChild(triangleGroup);
+      svg.appendChild(triadTextGroup);
       svg.appendChild(edgeGroup);
       svg.appendChild(nodeGroup);
       svg.appendChild(rangeGroup);
