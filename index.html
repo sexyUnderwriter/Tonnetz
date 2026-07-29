@@ -120,6 +120,13 @@
       box-shadow: 0 6px 16px rgba(18, 23, 28, 0.1);
     }
 
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+      width: 100%;
+    }
+
     .score-title {
       font-size: 12px;
       color: #4f5b67;
@@ -353,6 +360,21 @@
       fill: #56626d;
       letter-spacing: 0.03em;
     }
+
+    .tri-face {
+      fill: transparent;
+      stroke: transparent;
+      stroke-width: 1;
+      pointer-events: all;
+      cursor: pointer;
+      transition: fill 120ms ease, stroke 120ms ease, opacity 120ms ease;
+    }
+
+    .tri-face-selected {
+      fill: rgba(181, 71, 47, 0.16);
+      stroke: rgba(31, 40, 51, 0.58);
+      stroke-width: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -368,6 +390,11 @@
         <button id="clearPath" type="button">Clear</button>
         <button id="playRoute" type="button">Play</button>
         <button id="stopRoute" type="button">Stop</button>
+        <label for="playbackSource">Play</label>
+        <select id="playbackSource">
+          <option value="route">Route staff</option>
+          <option value="triad">Triad staff</option>
+        </select>
         <div class="tempo-wrap">
           <label for="tempoBpm">BPM</label>
           <input id="tempoBpm" type="number" min="40" max="220" value="84" />
@@ -381,10 +408,18 @@
         </defs>
       </svg>
     </div>
-    <div class="score-panel" aria-label="Rendered score preview panel">
-      <p class="score-title">Rendered whole-note score</p>
-      <div id="scorePreview" class="score-preview" role="img" aria-label="Rendered whole-note score preview">
-        <div class="score-status">Select a path to render the score.</div>
+    <div class="score-grid" aria-label="Rendered score preview panels">
+      <div class="score-panel" aria-label="Rendered route score preview panel">
+        <p class="score-title">Rendered route score (whole notes)</p>
+        <div id="scorePreview" class="score-preview" role="img" aria-label="Rendered whole-note route score preview">
+          <div class="score-status">Select a path to render the route staff.</div>
+        </div>
+      </div>
+      <div class="score-panel" aria-label="Rendered triad score preview panel">
+        <p class="score-title">Rendered triad score (separate staff)</p>
+        <div id="triadPreview" class="score-preview" role="img" aria-label="Rendered whole-note triad score preview">
+          <div class="score-status">Shift-click triangles to render the triad staff.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -398,7 +433,9 @@
       const playRouteButton = document.getElementById("playRoute");
       const stopRouteButton = document.getElementById("stopRoute");
       const tempoBpmInput = document.getElementById("tempoBpm");
+      const playbackSourceSelect = document.getElementById("playbackSource");
       const scorePreview = document.getElementById("scorePreview");
+      const triadPreview = document.getElementById("triadPreview");
       const width = 1200;
       const height = 850;
       const HEADER_BAND = 140;
@@ -456,7 +493,7 @@
         };
       }
 
-      function buildMusicXmlFromKeys(noteKeys) {
+      function buildRouteMusicXmlFromKeys(noteKeys) {
         const selectedNodes = noteKeys.map((key) => nodes.get(key)).filter(Boolean);
 
         const measures = [];
@@ -523,7 +560,7 @@
           "<score-partwise version=\"3.1\">",
           "  <part-list>",
           "    <score-part id=\"P1\">",
-          "      <part-name>Tonnetz Path</part-name>",
+          "      <part-name>Tonnetz Route</part-name>",
           "    </score-part>",
           "  </part-list>",
           "  <part id=\"P1\">",
@@ -533,20 +570,119 @@
         ].join("\n");
       }
 
-      let osmd = null;
+      function buildTriadMusicXmlFromTriangles(triangleKeys) {
+        const triads = triangleKeys
+          .map((triangleKey) => trianglesById.get(triangleKey))
+          .filter(Boolean)
+          .map((triangle) => {
+            const uniqueMidis = Array.from(
+              new Set(triangle.nodeKeys.map((nodeKey) => nodes.get(nodeKey)).filter(Boolean).map((node) => node.midi))
+            );
+            uniqueMidis.sort((a, b) => a - b);
+            return uniqueMidis;
+          })
+          .filter((midis) => midis.length > 0);
 
-      function setScoreStatus(message) {
-        scorePreview.innerHTML = `<div class="score-status">${message}</div>`;
+        const measures = [];
+        if (triads.length === 0) {
+          measures.push(
+            "    <measure number=\"1\">",
+            "      <attributes>",
+            "        <divisions>1</divisions>",
+            "        <key><fifths>0</fifths></key>",
+            "        <time><beats>4</beats><beat-type>4</beat-type></time>",
+            "        <clef><sign>G</sign><line>2</line></clef>",
+            "      </attributes>",
+            "      <note>",
+            "        <rest/>",
+            "        <duration>4</duration>",
+            "        <type>whole</type>",
+            "      </note>",
+            "    </measure>"
+          );
+        } else {
+          triads.forEach((midis, index) => {
+            const measure = [`    <measure number=\"${index + 1}\">`];
+            if (index === 0) {
+              measure.push(
+                "      <attributes>",
+                "        <divisions>1</divisions>",
+                "        <key><fifths>0</fifths></key>",
+                "        <time><beats>4</beats><beat-type>4</beat-type></time>",
+                "        <clef><sign>G</sign><line>2</line></clef>",
+                "      </attributes>"
+              );
+            }
+
+            midis.forEach((midi, noteIndex) => {
+              const pitch = midiToMusicXmlPitch(midi);
+              measure.push("      <note>");
+              if (noteIndex > 0) {
+                measure.push("        <chord/>");
+              }
+              measure.push(
+                "        <pitch>",
+                `          <step>${pitch.step}</step>`
+              );
+
+              if (pitch.alter !== 0) {
+                measure.push(`          <alter>${pitch.alter}</alter>`);
+              }
+
+              measure.push(
+                `          <octave>${pitch.octave}</octave>`,
+                "        </pitch>",
+                "        <duration>4</duration>",
+                "        <type>whole</type>",
+                "      </note>"
+              );
+            });
+
+            measure.push("    </measure>");
+            measures.push(...measure);
+          });
+        }
+
+        return [
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.1 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">",
+          "<score-partwise version=\"3.1\">",
+          "  <part-list>",
+          "    <score-part id=\"P1\">",
+          "      <part-name>Tonnetz Triads</part-name>",
+          "    </score-part>",
+          "  </part-list>",
+          "  <part id=\"P1\">",
+          ...measures,
+          "  </part>",
+          "</score-partwise>"
+        ].join("\n");
       }
 
-      function ensureOsmd() {
+      let routeOsmd = null;
+      let triadOsmd = null;
+
+      function setScoreStatus(targetElement, message) {
+        targetElement.innerHTML = `<div class="score-status">${message}</div>`;
+      }
+
+      function ensureOsmd(target) {
         if (!window.opensheetmusicdisplay || !window.opensheetmusicdisplay.OpenSheetMusicDisplay) {
-          setScoreStatus("MusicXML renderer not available. Check network/CDN access.");
+          setScoreStatus(scorePreview, "MusicXML renderer not available. Check network/CDN access.");
+          setScoreStatus(triadPreview, "MusicXML renderer not available. Check network/CDN access.");
           return false;
         }
 
-        if (!osmd) {
-          osmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(scorePreview, {
+        if (target === "route" && !routeOsmd) {
+          routeOsmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(scorePreview, {
+            autoResize: false,
+            drawTitle: false,
+            backend: "svg"
+          });
+        }
+
+        if (target === "triad" && !triadOsmd) {
+          triadOsmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(triadPreview, {
             autoResize: false,
             drawTitle: false,
             backend: "svg"
@@ -556,17 +692,31 @@
         return true;
       }
 
-      async function renderMusicXmlFromKeys(noteKeys) {
-        const xml = buildMusicXmlFromKeys(noteKeys);
-        if (!ensureOsmd()) {
+      async function renderRouteMusicXmlFromKeys(noteKeys) {
+        const xml = buildRouteMusicXmlFromKeys(noteKeys);
+        if (!ensureOsmd("route")) {
           return;
         }
 
         try {
-          await osmd.load(xml);
-          osmd.render();
+          await routeOsmd.load(xml);
+          routeOsmd.render();
         } catch (error) {
-          setScoreStatus("Unable to render MusicXML from current selection.");
+          setScoreStatus(scorePreview, "Unable to render route MusicXML from current selection.");
+        }
+      }
+
+      async function renderTriadMusicXmlFromTriangleKeys(triangleKeys) {
+        const xml = buildTriadMusicXmlFromTriangles(triangleKeys);
+        if (!ensureOsmd("triad")) {
+          return;
+        }
+
+        try {
+          await triadOsmd.load(xml);
+          triadOsmd.render();
+        } catch (error) {
+          setScoreStatus(triadPreview, "Unable to render triad MusicXML from current selection.");
         }
       }
 
@@ -627,6 +777,31 @@
         return nodes.get(`${u},${v}`);
       }
 
+      const triangles = [];
+
+      function pushTriangle(nodeKeys) {
+        const sortedId = [...nodeKeys].sort().join("|");
+        if (triangles.some((triangle) => triangle.id === sortedId)) {
+          return;
+        }
+        triangles.push({ id: sortedId, nodeKeys });
+      }
+
+      nodes.forEach((node) => {
+        const a = nodeAt(node.u, node.v);
+        const b = nodeAt(node.u + 1, node.v);
+        const c = nodeAt(node.u, node.v + 1);
+        const d = nodeAt(node.u + 1, node.v + 1);
+
+        if (a && b && c) {
+          pushTriangle([a.key, b.key, c.key]);
+        }
+
+        if (b && c && d) {
+          pushTriangle([b.key, c.key, d.key]);
+        }
+      });
+
       nodes.forEach((a) => {
         directions.forEach(([du, dv]) => {
           const b = nodeAt(a.u + du, a.v + dv);
@@ -637,14 +812,17 @@
         });
       });
 
+      const triangleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const edgeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const rangeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const textGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const hitGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const nodeVisuals = [];
+      const triangleVisuals = [];
       const edgeVisuals = [];
       const adjacency = new Map();
+      const trianglesById = new Map();
 
       function pairKey(aKey, bKey) {
         return aKey < bKey ? `${aKey}|${bKey}` : `${bKey}|${aKey}`;
@@ -675,6 +853,31 @@
 
         addNeighbor(a.key, b.key);
         addNeighbor(b.key, a.key);
+      });
+
+      triangles.forEach((triangle) => {
+        const points = triangle.nodeKeys
+          .map((nodeKey) => nodes.get(nodeKey))
+          .filter(Boolean)
+          .map((node) => `${node.x},${node.y}`)
+          .join(" ");
+
+        const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        polygon.setAttribute("points", points);
+        polygon.setAttribute("class", "tri-face");
+        triangleGroup.appendChild(polygon);
+
+        const uniqueSortedKeys = [...triangle.nodeKeys]
+          .sort((left, right) => (nodes.get(left).midi - nodes.get(right).midi));
+
+        const record = {
+          id: triangle.id,
+          nodeKeys: uniqueSortedKeys,
+          polygon
+        };
+
+        trianglesById.set(triangle.id, record);
+        triangleVisuals.push(record);
       });
 
       nodes.forEach((n) => {
@@ -753,7 +956,7 @@
       interactionNote.setAttribute("x", 52);
       interactionNote.setAttribute("y", 112);
       interactionNote.setAttribute("class", "interaction-note");
-      interactionNote.textContent = "Click notes to add waypoints for a route. Repeated notes are allowed. Click the latest note again to undo, or click empty space to clear all.";
+      interactionNote.textContent = "Click notes to build a route. Shift-click triangles to select triads. Click empty space or Clear to reset.";
 
       const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
@@ -818,11 +1021,13 @@
       footer.setAttribute("x", 52);
       footer.setAttribute("y", height - 22);
       footer.setAttribute("class", "footer");
-      footer.textContent = "Static composition grid: overlap notes show all applicable ring colors for shared recorder coverage.";
+      footer.textContent = "Static composition grid: overlap notes show all applicable ring colors. Route and triad staves are rendered separately.";
 
       let selectedNodeKeys = [];
       let activePathKeys = [];
-      let playbackKeys = [];
+      let selectedTriangleIds = [];
+      let routePlaybackEvents = [];
+      let triadPlaybackEvents = [];
 
       let audioContext = null;
       let masterGain = null;
@@ -873,35 +1078,41 @@
         activeOscillators = [];
       }
 
-      function playSingleWhole(midi, startTime, durationSeconds) {
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
+      function playWholeEvent(midis, startTime, durationSeconds) {
+        if (!midis || midis.length === 0) {
+          return;
+        }
 
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
+        const voiceGain = audioContext.createGain();
+        const voiceLevel = Math.min(0.24, 0.24 / Math.sqrt(midis.length));
+        voiceGain.gain.setValueAtTime(0.0001, startTime);
+        voiceGain.gain.linearRampToValueAtTime(voiceLevel, startTime + 0.03);
+        voiceGain.gain.setValueAtTime(voiceLevel, startTime + Math.max(0.06, durationSeconds - 0.08));
+        voiceGain.gain.linearRampToValueAtTime(0.0001, startTime + durationSeconds);
+        voiceGain.connect(masterGain);
 
-        gain.gain.setValueAtTime(0.0001, startTime);
-        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.03);
-        gain.gain.setValueAtTime(0.2, startTime + Math.max(0.06, durationSeconds - 0.08));
-        gain.gain.linearRampToValueAtTime(0.0001, startTime + durationSeconds);
-
-        osc.connect(gain);
-        gain.connect(masterGain);
-
-        osc.start(startTime);
-        osc.stop(startTime + durationSeconds + 0.02);
-
-        activeOscillators.push({ osc, gain });
+        midis.forEach((midi) => {
+          const osc = audioContext.createOscillator();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
+          osc.connect(voiceGain);
+          osc.start(startTime);
+          osc.stop(startTime + durationSeconds + 0.02);
+          activeOscillators.push({ osc, gain: voiceGain });
+        });
       }
 
-      async function playRoute() {
+      async function playSelectedSource() {
         if (!(await resumeAudioEngine())) {
           return;
         }
 
-        const keysToPlay = playbackKeys.length > 0 ? playbackKeys : [];
-        if (keysToPlay.length === 0) {
-          interactionNote.textContent = "No notes selected for playback. Add waypoints first.";
+        const source = playbackSourceSelect.value;
+        const eventsToPlay = source === "triad" ? triadPlaybackEvents : routePlaybackEvents;
+        if (eventsToPlay.length === 0) {
+          interactionNote.textContent = source === "triad"
+            ? "No triads selected for playback. Shift-click triangles first."
+            : "No route notes selected for playback. Add waypoints first.";
           return;
         }
 
@@ -913,20 +1124,23 @@
         const myToken = playbackToken;
         const startAt = audioContext.currentTime + 0.04;
 
-        const noteNodes = keysToPlay.map((key) => nodes.get(key)).filter(Boolean);
-        noteNodes.forEach((node, idx) => {
-          playSingleWhole(node.midi, startAt + idx * wholeDuration, wholeDuration);
+        eventsToPlay.forEach((event, idx) => {
+          playWholeEvent(event.midis, startAt + idx * wholeDuration, wholeDuration);
         });
 
-        interactionNote.textContent = `Playing ${noteNodes.length} whole note${noteNodes.length === 1 ? "" : "s"} at ${bpm} BPM.`;
+        interactionNote.textContent = source === "triad"
+          ? `Playing ${eventsToPlay.length} whole-note triad${eventsToPlay.length === 1 ? "" : "s"} at ${bpm} BPM.`
+          : `Playing ${eventsToPlay.length} whole note${eventsToPlay.length === 1 ? "" : "s"} at ${bpm} BPM.`;
 
-        const totalMs = Math.ceil(noteNodes.length * wholeDuration * 1000);
+        const totalMs = Math.ceil(eventsToPlay.length * wholeDuration * 1000);
         window.setTimeout(() => {
           if (myToken !== playbackToken) {
             return;
           }
           activeOscillators = [];
-          interactionNote.textContent = "Playback finished. Click Play to hear the route again.";
+          interactionNote.textContent = source === "triad"
+            ? "Triad playback finished. Click Play to hear the triad staff again."
+            : "Route playback finished. Click Play to hear the route again.";
         }, totalMs + 80);
       }
 
@@ -1079,6 +1293,41 @@
         activePathKeys = [];
       }
 
+      function clearTriadState() {
+        selectedTriangleIds = [];
+      }
+
+      function routeStatusMessage() {
+        if (selectedNodeKeys.length === 0) {
+          return "Click notes to add waypoints for a route.";
+        }
+
+        const startName = visualByKey.get(selectedNodeKeys[0]).displayName;
+        if (selectedNodeKeys.length === 1) {
+          return `Start ${startName} selected. Add more waypoints to extend the route.`;
+        }
+
+        const endName = visualByKey.get(selectedNodeKeys[selectedNodeKeys.length - 1]).displayName;
+        const waypointCount = Math.max(0, selectedNodeKeys.length - 2);
+        const modeLabel = pathModeSelect.options[pathModeSelect.selectedIndex].text;
+        if (activePathKeys.length <= 1) {
+          return "No route found through the current waypoint chain.";
+        }
+
+        return `${modeLabel} route: ${startName} to ${endName} with ${waypointCount} waypoint${waypointCount === 1 ? "" : "s"}, ${activePathKeys.length - 1} moves.`;
+      }
+
+      function triadStatusMessage() {
+        if (selectedTriangleIds.length === 0) {
+          return "Shift-click triangles to add triads.";
+        }
+        return `${selectedTriangleIds.length} triad${selectedTriangleIds.length === 1 ? "" : "s"} selected for the separate staff.`;
+      }
+
+      function updateInteractionMessage() {
+        interactionNote.textContent = `${routeStatusMessage()} ${triadStatusMessage()}`;
+      }
+
       function updatePathView() {
         const pathEdges = new Set();
         for (let i = 0; i < activePathKeys.length - 1; i += 1) {
@@ -1123,34 +1372,65 @@
         } else if (selectedNodeKeys.length > 0) {
           xmlKeys = [...selectedNodeKeys];
         }
-        playbackKeys = [...xmlKeys];
-        void renderMusicXmlFromKeys(xmlKeys);
+        routePlaybackEvents = xmlKeys
+          .map((key) => nodes.get(key))
+          .filter(Boolean)
+          .map((node) => ({ midis: [node.midi] }));
 
-        if (selectedNodeKeys.length === 0) {
-          interactionNote.textContent = "Click notes to add waypoints for a route. Repeated notes are allowed. Click the latest note again to undo, or click empty space to clear all.";
-          return;
-        }
-
-        const startName = visualByKey.get(selectedNodeKeys[0]).displayName;
-        if (selectedNodeKeys.length === 1) {
-          interactionNote.textContent = `Start ${startName} selected. Add more waypoints to extend the route.`;
-          return;
-        }
-
-        const endName = visualByKey.get(selectedNodeKeys[selectedNodeKeys.length - 1]).displayName;
-        const waypointCount = Math.max(0, selectedNodeKeys.length - 2);
-        const modeLabel = pathModeSelect.options[pathModeSelect.selectedIndex].text;
-        if (!hasPath) {
-          interactionNote.textContent = `No route found through the current waypoint chain.`;
-          return;
-        }
-
-        interactionNote.textContent = `${modeLabel} route: ${startName} to ${endName} with ${waypointCount} waypoint${waypointCount === 1 ? "" : "s"}, ${activePathKeys.length - 1} moves.`;
+        void renderRouteMusicXmlFromKeys(xmlKeys);
+        updateInteractionMessage();
       }
+
+      function updateTriadView() {
+        const selectedSet = new Set(selectedTriangleIds);
+
+        triangleVisuals.forEach((triangleVisual) => {
+          triangleVisual.polygon.classList.toggle("tri-face-selected", selectedSet.has(triangleVisual.id));
+        });
+
+        triadPlaybackEvents = selectedTriangleIds
+          .map((triangleId) => trianglesById.get(triangleId))
+          .filter(Boolean)
+          .map((triangle) => {
+            const midis = triangle.nodeKeys
+              .map((nodeKey) => nodes.get(nodeKey))
+              .filter(Boolean)
+              .map((node) => node.midi)
+              .sort((a, b) => a - b);
+            return { midis };
+          });
+
+        void renderTriadMusicXmlFromTriangleKeys(selectedTriangleIds);
+        updateInteractionMessage();
+      }
+
+      triangleVisuals.forEach((triangleVisual) => {
+        triangleVisual.polygon.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (!event.shiftKey) {
+            interactionNote.textContent = "Use Shift-click on a triangle to add it to the triad staff.";
+            return;
+          }
+
+          const id = triangleVisual.id;
+          const alreadySelected = selectedTriangleIds.includes(id);
+          if (alreadySelected) {
+            selectedTriangleIds = selectedTriangleIds.filter((triangleId) => triangleId !== id);
+          } else {
+            selectedTriangleIds.push(id);
+          }
+
+          updateTriadView();
+        });
+      });
 
       nodeVisuals.forEach((visual) => {
         visual.hitTarget.addEventListener("click", (event) => {
           event.stopPropagation();
+          if (event.shiftKey) {
+            return;
+          }
+
           const clickedKey = visual.key;
 
           if (selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1]) {
@@ -1169,8 +1449,13 @@
         if (event.target.closest(".node-hit-target")) {
           return;
         }
+        if (event.target.closest(".tri-face")) {
+          return;
+        }
         clearPathState();
+        clearTriadState();
         updatePathView();
+        updateTriadView();
       });
 
       pathModeSelect.addEventListener("change", () => {
@@ -1180,11 +1465,13 @@
 
       clearPathButton.addEventListener("click", () => {
         clearPathState();
+        clearTriadState();
         updatePathView();
+        updateTriadView();
       });
 
       playRouteButton.addEventListener("click", () => {
-        void playRoute();
+        void playSelectedSource();
       });
 
       stopRouteButton.addEventListener("click", () => {
@@ -1192,6 +1479,7 @@
         interactionNote.textContent = "Playback stopped.";
       });
 
+      svg.appendChild(triangleGroup);
       svg.appendChild(edgeGroup);
       svg.appendChild(nodeGroup);
       svg.appendChild(rangeGroup);
@@ -1204,6 +1492,7 @@
       svg.appendChild(footer);
 
       updatePathView();
+      updateTriadView();
     })();
   </script>
 </body>
