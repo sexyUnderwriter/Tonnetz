@@ -1,0 +1,30 @@
+{
+  "name": "Tonnetz — Recorder Range Field",
+  "short_name": "Tonnetz",
+  "description": "Interactive Tonnetz composition grid with recorder ranges, MusicXML rendering and audio playback.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#f4f1e8",
+  "theme_color": "#b5472f",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
