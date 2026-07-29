@@ -1512,7 +1512,7 @@
       }
 
       triangleVisuals.forEach((triangleVisual) => {
-        triangleVisual.polygon.addEventListener("click", (event) => {
+        triangleVisual.polygon.addEventListener("pointerdown", (event) => {
           if (activeMode !== "triad" && !event.shiftKey) {
             interactionNote.textContent = "Switch to Triad mode (or Shift-click) to add a triangle to the triad staff.";
             return;
@@ -1533,7 +1533,7 @@
       });
 
       nodeVisuals.forEach((visual) => {
-        visual.hitTarget.addEventListener("click", (event) => {
+        visual.hitTarget.addEventListener("pointerdown", (event) => {
           if (activeMode === "route") {
             event.stopPropagation();
           }
@@ -1555,7 +1555,7 @@
         });
       });
 
-      svg.addEventListener("click", (event) => {
+      svg.addEventListener("pointerdown", (event) => {
         if (event.target.closest(".node-hit-target")) {
           return;
         }
