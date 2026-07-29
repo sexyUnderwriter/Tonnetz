@@ -1513,11 +1513,12 @@
 
       triangleVisuals.forEach((triangleVisual) => {
         triangleVisual.polygon.addEventListener("click", (event) => {
-          event.stopPropagation();
           if (activeMode !== "triad" && !event.shiftKey) {
             interactionNote.textContent = "Switch to Triad mode (or Shift-click) to add a triangle to the triad staff.";
             return;
           }
+
+          event.stopPropagation();
 
           const id = triangleVisual.id;
           const alreadySelected = selectedTriangleIds.includes(id);
