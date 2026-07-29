@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tonnetz Grid - Recorder Ranges</title>
+  <style>
+    :root {
+      --paper: #f4f1e8;
+      --ink: #1f2833;
+      --ink-soft: #4d5a66;
+      --accent: #b5472f;
+      --basset-accent: #6a4c93;
+      --alto-accent: #2f7d8c;
+      --soprano-accent: #7d5a2f;
+      --line: #8f9da6;
+      --line-soft: #b8c1c7;
+      --note-fill: #faf8f2;
+      --edge-fade: #d7dee2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(181, 71, 47, 0.08) 0%, rgba(181, 71, 47, 0) 40%),
+        radial-gradient(circle at 78% 88%, rgba(42, 107, 123, 0.08) 0%, rgba(42, 107, 123, 0) 42%),
+        linear-gradient(150deg, #f7f3ea 0%, #ece6d9 100%);
+      font-family: "EB Garamond", "Palatino Linotype", Palatino, serif;
+      color: var(--ink);
+      overflow: auto;
+    }
+
+    .frame {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+      min-height: 100%;
+      padding: clamp(10px, 1.4vw, 22px);
+    }
+
+    .tonnetz-stage {
+      position: relative;
+      width: 100%;
+      height: min(74vh, 860px);
+      min-height: 520px;
+    }
+
+    .path-controls {
+      position: absolute;
+      right: clamp(18px, 2vw, 28px);
+      bottom: clamp(18px, 2vw, 28px);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(244, 241, 232, 0.95);
+      border: 1px solid rgba(31, 40, 51, 0.22);
+      border-radius: 10px;
+      padding: 8px 10px;
+      box-shadow: 0 6px 16px rgba(18, 23, 28, 0.1);
+      z-index: 2;
+    }
+
+    .path-controls label {
+      font-size: 12px;
+      color: #4f5b67;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .path-controls select,
+    .path-controls button {
+      font-family: inherit;
+      font-size: 12px;
+      color: #1f2833;
+      background: #fffdf7;
+      border: 1px solid rgba(31, 40, 51, 0.32);
+      border-radius: 6px;
+      padding: 4px 7px;
+    }
+
+    .path-controls button {
+      cursor: pointer;
+    }
+
+    .tempo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 2px;
+    }
+
+    .tempo-wrap input {
+      width: 54px;
+      font-family: inherit;
+      font-size: 12px;
+      color: #1f2833;
+      background: #fffdf7;
+      border: 1px solid rgba(31, 40, 51, 0.32);
+      border-radius: 6px;
+      padding: 4px 6px;
+    }
+
+    .score-panel {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      background: rgba(244, 241, 232, 0.95);
+      border: 1px solid rgba(31, 40, 51, 0.22);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 6px 16px rgba(18, 23, 28, 0.1);
+    }
+
+    .score-title {
+      font-size: 12px;
+      color: #4f5b67;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin: 0 0 6px 2px;
+    }
+
+    .score-preview {
+      width: 100%;
+      min-height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      background: #fffdf7;
+      border: 1px solid rgba(31, 40, 51, 0.3);
+      border-radius: 8px;
+      padding: 6px;
+    }
+
+    .score-status {
+      font-size: 13px;
+      fill: #3f4d59;
+      color: #3f4d59;
+      text-align: center;
+      padding: 0 8px;
+    }
+
+    #tonnetz {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: var(--paper);
+      border: 1px solid rgba(31, 40, 51, 0.16);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.8) inset,
+        0 18px 40px rgba(18, 23, 28, 0.12);
+    }
+
+    .title {
+      font-size: clamp(18px, 2.2vw, 30px);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      fill: var(--ink);
+    }
+
+    .subtitle {
+      font-size: clamp(11px, 1.2vw, 15px);
+      letter-spacing: 0.06em;
+      fill: var(--ink-soft);
+      text-transform: uppercase;
+    }
+
+    .tri-line {
+      stroke: var(--line-soft);
+      stroke-width: 1.05;
+    }
+
+    .tri-line-strong {
+      stroke: var(--line);
+      stroke-width: 1.45;
+    }
+
+    .node {
+      fill: var(--note-fill);
+      stroke: rgba(31, 40, 51, 0.36);
+      stroke-width: 0.95;
+      transition: opacity 120ms ease, stroke-width 120ms ease, fill 120ms ease;
+    }
+
+    .node-hit-target {
+      fill: transparent;
+      cursor: pointer;
+    }
+
+    .node-muted {
+      opacity: 0.2;
+    }
+
+    .node-match {
+      stroke: #16212c;
+      stroke-width: 1.85;
+      fill: #fffaf0;
+    }
+
+    .node-selected {
+      stroke: #111a22;
+      stroke-width: 2.5;
+      fill: #ffeccf;
+    }
+
+    .node-path {
+      stroke: #0f1720;
+      stroke-width: 1.7;
+      fill: #fff9ee;
+    }
+
+    .node-start {
+      stroke: #0a1118;
+      stroke-width: 2.8;
+      fill: #ffe3c4;
+    }
+
+    .node-end {
+      stroke: #0a1118;
+      stroke-width: 2.8;
+      fill: #d8eaf0;
+    }
+
+    .node-waypoint {
+      stroke: #16212c;
+      stroke-width: 2.2;
+      fill: #f7ecd8;
+    }
+
+    .range-ring {
+      fill: none;
+      stroke-width: 2.1;
+      opacity: 0.96;
+      transition: opacity 120ms ease, stroke-width 120ms ease;
+    }
+
+    .range-ring-muted {
+      opacity: 0.12;
+    }
+
+    .range-ring-match {
+      opacity: 1;
+      stroke-width: 2.45;
+    }
+
+    .range-ring-selected {
+      opacity: 1;
+      stroke-width: 2.8;
+    }
+
+    .range-ring-path {
+      opacity: 1;
+      stroke-width: 2.6;
+    }
+
+    .range-ring-tenor {
+      stroke: var(--accent);
+    }
+
+    .range-ring-basset {
+      stroke: var(--basset-accent);
+    }
+
+    .range-ring-alto {
+      stroke: var(--alto-accent);
+    }
+
+    .range-ring-soprano {
+      stroke: var(--soprano-accent);
+    }
+
+    .label {
+      font-size: clamp(10px, 1vw, 13px);
+      fill: var(--ink);
+      text-anchor: middle;
+      dominant-baseline: central;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      pointer-events: none;
+      transition: opacity 120ms ease, fill 120ms ease;
+    }
+
+    .label-muted {
+      opacity: 0.22;
+    }
+
+    .label-match {
+      fill: #121b24;
+    }
+
+    .label-selected {
+      fill: #000;
+      font-weight: 700;
+    }
+
+    .label-path {
+      fill: #111a22;
+      font-weight: 700;
+    }
+
+    .label-start,
+    .label-end {
+      fill: #000;
+      font-weight: 700;
+    }
+
+    .label-waypoint {
+      fill: #18222d;
+      font-weight: 700;
+    }
+
+    .edge-muted {
+      opacity: 0.22;
+    }
+
+    .path-edge-active {
+      stroke: #243447;
+      stroke-width: 2.7;
+      opacity: 1;
+    }
+
+    .edge-fade {
+      stroke: var(--edge-fade);
+      stroke-width: 1;
+      fill: none;
+      stroke-dasharray: 2 4;
+    }
+
+    .footer {
+      font-size: clamp(10px, 0.9vw, 12px);
+      fill: #68747f;
+      letter-spacing: 0.035em;
+    }
+
+    .legend-label {
+      font-size: clamp(10px, 0.92vw, 12px);
+      fill: #5e6973;
+      letter-spacing: 0.025em;
+      dominant-baseline: central;
+    }
+
+    .interaction-note {
+      font-size: clamp(10px, 0.95vw, 13px);
+      fill: #56626d;
+      letter-spacing: 0.03em;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="tonnetz-stage">
+      <div class="path-controls" aria-label="Path guide controls">
+        <label for="pathMode">Path</label>
+        <select id="pathMode">
+          <option value="shortest">Shortest</option>
+          <option value="smooth">Smooth voice-leading</option>
+          <option value="tension">Tension-increase</option>
+        </select>
+        <button id="clearPath" type="button">Clear</button>
+        <button id="playRoute" type="button">Play</button>
+        <button id="stopRoute" type="button">Stop</button>
+        <div class="tempo-wrap">
+          <label for="tempoBpm">BPM</label>
+          <input id="tempoBpm" type="number" min="40" max="220" value="84" />
+        </div>
+      </div>
+      <svg id="tonnetz" viewBox="0 0 1200 850" role="img" aria-label="Tonnetz triangle grid centered on middle C with basset, tenor, alto, and soprano recorder ranges">
+        <defs>
+          <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#101923" flood-opacity="0.2" />
+          </filter>
+        </defs>
+      </svg>
+    </div>
+    <div class="score-panel" aria-label="Rendered score preview panel">
+      <p class="score-title">Rendered whole-note score</p>
+      <div id="scorePreview" class="score-preview" role="img" aria-label="Rendered whole-note score preview">
+        <div class="score-status">Select a path to render the score.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.9.2/build/opensheetmusicdisplay.min.js"></script>
+  <script>
+    (function drawTonnetz() {
+      const svg = document.getElementById("tonnetz");
+      const pathModeSelect = document.getElementById("pathMode");
+      const clearPathButton = document.getElementById("clearPath");
+      const playRouteButton = document.getElementById("playRoute");
+      const stopRouteButton = document.getElementById("stopRoute");
+      const tempoBpmInput = document.getElementById("tempoBpm");
+      const scorePreview = document.getElementById("scorePreview");
+      const width = 1200;
+      const height = 850;
+      const HEADER_BAND = 140;
+      const SIDE_MARGIN = 40;
+      const BOTTOM_MARGIN = 60;
+
+      // Recorder ranges used in this static score-planning grid.
+      const BASSET_MIN_MIDI = 53; // F3
+      const BASSET_MAX_MIDI = 79; // G5
+      const TENOR_MIN_MIDI = 60; // C4
+      const TENOR_MAX_MIDI = 86; // D6
+      const ALTO_MIN_MIDI = 65;  // F4
+      const ALTO_MAX_MIDI = 91;  // G6
+      const SOPRANO_MIN_MIDI = 72; // C5
+      const SOPRANO_MAX_MIDI = 98; // D7
+      const GRID_MIN_MIDI = Math.min(BASSET_MIN_MIDI, TENOR_MIN_MIDI, ALTO_MIN_MIDI);
+      const GRID_MAX_MIDI = Math.max(BASSET_MAX_MIDI, TENOR_MAX_MIDI, ALTO_MAX_MIDI, SOPRANO_MAX_MIDI);
+
+      const CENTER_X = width / 2;
+      const CENTER_Y = (HEADER_BAND + (height - BOTTOM_MARGIN)) / 2;
+      const SPACING = 68;
+      const SQRT3 = Math.sqrt(3);
+      const RADIUS = 16;
+
+      const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+      const musicXmlPitchMap = [
+        { step: "C", alter: 0 },
+        { step: "C", alter: 1 },
+        { step: "D", alter: 0 },
+        { step: "E", alter: -1 },
+        { step: "E", alter: 0 },
+        { step: "F", alter: 0 },
+        { step: "F", alter: 1 },
+        { step: "G", alter: 0 },
+        { step: "A", alter: -1 },
+        { step: "A", alter: 0 },
+        { step: "B", alter: -1 },
+        { step: "B", alter: 0 }
+      ];
+
+      function midiToName(midi) {
+        const pc = ((midi % 12) + 12) % 12;
+        const octave = Math.floor(midi / 12) - 1;
+        return pitchNames[pc] + octave;
+      }
+
+      function midiToMusicXmlPitch(midi) {
+        const pc = ((midi % 12) + 12) % 12;
+        const octave = Math.floor(midi / 12) - 1;
+        const pitch = musicXmlPitchMap[pc];
+        return {
+          step: pitch.step,
+          alter: pitch.alter,
+          octave
+        };
+      }
+
+      function buildMusicXmlFromKeys(noteKeys) {
+        const selectedNodes = noteKeys.map((key) => nodes.get(key)).filter(Boolean);
+
+        const measures = [];
+        if (selectedNodes.length === 0) {
+          measures.push(
+            "    <measure number=\"1\">",
+            "      <attributes>",
+            "        <divisions>1</divisions>",
+            "        <key><fifths>0</fifths></key>",
+            "        <time><beats>4</beats><beat-type>4</beat-type></time>",
+            "        <clef><sign>G</sign><line>2</line></clef>",
+            "      </attributes>",
+            "      <note>",
+            "        <rest/>",
+            "        <duration>4</duration>",
+            "        <type>whole</type>",
+            "      </note>",
+            "    </measure>"
+          );
+        } else {
+          selectedNodes.forEach((node, index) => {
+            const pitch = midiToMusicXmlPitch(node.midi);
+            const measure = [
+              `    <measure number=\"${index + 1}\">`
+            ];
+
+            if (index === 0) {
+              measure.push(
+                "      <attributes>",
+                "        <divisions>1</divisions>",
+                "        <key><fifths>0</fifths></key>",
+                "        <time><beats>4</beats><beat-type>4</beat-type></time>",
+                "        <clef><sign>G</sign><line>2</line></clef>",
+                "      </attributes>"
+              );
+            }
+
+            measure.push(
+              "      <note>",
+              "        <pitch>",
+              `          <step>${pitch.step}</step>`
+            );
+
+            if (pitch.alter !== 0) {
+              measure.push(`          <alter>${pitch.alter}</alter>`);
+            }
+
+            measure.push(
+              `          <octave>${pitch.octave}</octave>`,
+              "        </pitch>",
+              "        <duration>4</duration>",
+              "        <type>whole</type>",
+              "      </note>",
+              "    </measure>"
+            );
+
+            measures.push(...measure);
+          });
+        }
+
+        return [
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.1 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">",
+          "<score-partwise version=\"3.1\">",
+          "  <part-list>",
+          "    <score-part id=\"P1\">",
+          "      <part-name>Tonnetz Path</part-name>",
+          "    </score-part>",
+          "  </part-list>",
+          "  <part id=\"P1\">",
+          ...measures,
+          "  </part>",
+          "</score-partwise>"
+        ].join("\n");
+      }
+
+      let osmd = null;
+
+      function setScoreStatus(message) {
+        scorePreview.innerHTML = `<div class="score-status">${message}</div>`;
+      }
+
+      function ensureOsmd() {
+        if (!window.opensheetmusicdisplay || !window.opensheetmusicdisplay.OpenSheetMusicDisplay) {
+          setScoreStatus("MusicXML renderer not available. Check network/CDN access.");
+          return false;
+        }
+
+        if (!osmd) {
+          osmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(scorePreview, {
+            autoResize: false,
+            drawTitle: false,
+            backend: "svg"
+          });
+        }
+
+        return true;
+      }
+
+      async function renderMusicXmlFromKeys(noteKeys) {
+        const xml = buildMusicXmlFromKeys(noteKeys);
+        if (!ensureOsmd()) {
+          return;
+        }
+
+        try {
+          await osmd.load(xml);
+          osmd.render();
+        } catch (error) {
+          setScoreStatus("Unable to render MusicXML from current selection.");
+        }
+      }
+
+      function uvToPoint(u, v) {
+        const x = CENTER_X + SPACING * (u + 0.5 * v);
+        const y = CENTER_Y - SPACING * (SQRT3 / 2) * v;
+        return { x, y };
+      }
+
+      function inBounds(x, y) {
+        return x > SIDE_MARGIN && x < width - SIDE_MARGIN && y > HEADER_BAND && y < height - BOTTOM_MARGIN;
+      }
+
+      const nodes = new Map();
+      const searchExtent = 16;
+
+      for (let u = -searchExtent; u <= searchExtent; u += 1) {
+        for (let v = -searchExtent; v <= searchExtent; v += 1) {
+          const midi = 60 + 7 * u + 4 * v;
+          if (midi < GRID_MIN_MIDI || midi > GRID_MAX_MIDI) {
+            continue;
+          }
+
+          const pt = uvToPoint(u, v);
+          if (!inBounds(pt.x, pt.y)) {
+            continue;
+          }
+
+          const key = `${u},${v}`;
+          const inBasset = midi >= BASSET_MIN_MIDI && midi <= BASSET_MAX_MIDI;
+          const inTenor = midi >= TENOR_MIN_MIDI && midi <= TENOR_MAX_MIDI;
+          const inAlto = midi >= ALTO_MIN_MIDI && midi <= ALTO_MAX_MIDI;
+          const inSoprano = midi >= SOPRANO_MIN_MIDI && midi <= SOPRANO_MAX_MIDI;
+          nodes.set(key, {
+            key,
+            u,
+            v,
+            midi,
+            name: midiToName(midi),
+            x: pt.x,
+            y: pt.y,
+            inBasset,
+            inTenor,
+            inAlto,
+            inSoprano
+          });
+        }
+      }
+
+      const edgePairs = [];
+      const directions = [
+        [1, 0],
+        [0, 1],
+        [1, -1]
+      ];
+
+      function nodeAt(u, v) {
+        return nodes.get(`${u},${v}`);
+      }
+
+      nodes.forEach((a) => {
+        directions.forEach(([du, dv]) => {
+          const b = nodeAt(a.u + du, a.v + dv);
+          if (!b) {
+            return;
+          }
+          edgePairs.push([a, b]);
+        });
+      });
+
+      const edgeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const rangeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const textGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const hitGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const nodeVisuals = [];
+      const edgeVisuals = [];
+      const adjacency = new Map();
+
+      function pairKey(aKey, bKey) {
+        return aKey < bKey ? `${aKey}|${bKey}` : `${bKey}|${aKey}`;
+      }
+
+      function addNeighbor(aKey, bKey) {
+        if (!adjacency.has(aKey)) {
+          adjacency.set(aKey, []);
+        }
+        adjacency.get(aKey).push(bKey);
+      }
+
+      edgePairs.forEach(([a, b]) => {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", a.x);
+        line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x);
+        line.setAttribute("y2", b.y);
+
+        const centerDistance = Math.hypot((a.x + b.x) * 0.5 - CENTER_X, (a.y + b.y) * 0.5 - CENTER_Y);
+        line.setAttribute("class", centerDistance < 260 ? "tri-line-strong" : "tri-line");
+        edgeGroup.appendChild(line);
+
+        edgeVisuals.push({
+          key: pairKey(a.key, b.key),
+          line
+        });
+
+        addNeighbor(a.key, b.key);
+        addNeighbor(b.key, a.key);
+      });
+
+      nodes.forEach((n) => {
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", n.x);
+        circle.setAttribute("cy", n.y);
+        circle.setAttribute("r", RADIUS);
+        circle.setAttribute("class", "node");
+        circle.setAttribute("filter", "url(#softShadow)");
+        nodeGroup.appendChild(circle);
+
+        const ringClasses = [];
+        if (n.inBasset) {
+          ringClasses.push("range-ring range-ring-basset");
+        }
+        if (n.inTenor) {
+          ringClasses.push("range-ring range-ring-tenor");
+        }
+        if (n.inAlto) {
+          ringClasses.push("range-ring range-ring-alto");
+        }
+        if (n.inSoprano) {
+          ringClasses.push("range-ring range-ring-soprano");
+        }
+
+        const ringElements = [];
+
+        ringClasses.forEach((ringClass, idx) => {
+          const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          ring.setAttribute("cx", n.x);
+          ring.setAttribute("cy", n.y);
+          ring.setAttribute("r", RADIUS + 3.1 + idx * 2.9);
+          ring.setAttribute("class", ringClass);
+          rangeGroup.appendChild(ring);
+          ringElements.push(ring);
+        });
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", n.x);
+        label.setAttribute("y", n.y + 0.4);
+        label.setAttribute("class", "label");
+        label.textContent = n.name;
+        textGroup.appendChild(label);
+
+        const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        hitTarget.setAttribute("cx", n.x);
+        hitTarget.setAttribute("cy", n.y);
+        hitTarget.setAttribute("r", RADIUS + 7.2);
+        hitTarget.setAttribute("class", "node-hit-target");
+        hitGroup.appendChild(hitTarget);
+
+        nodeVisuals.push({
+          key: n.key,
+          pitchClass: ((n.midi % 12) + 12) % 12,
+          displayName: n.name,
+          core: circle,
+          label,
+          rings: ringElements,
+          hitTarget
+        });
+      });
+
+      const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      title.setAttribute("x", 52);
+      title.setAttribute("y", 58);
+      title.setAttribute("class", "title");
+      title.textContent = "Tonnetz - Recorder Range Field";
+
+      const subtitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      subtitle.setAttribute("x", 52);
+      subtitle.setAttribute("y", 86);
+      subtitle.setAttribute("class", "subtitle");
+      subtitle.textContent = "Centered on Middle C (C4) | Basset F3-G5, Tenor C4-D6, Alto F4-G6, Soprano C5-D7";
+
+      const interactionNote = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      interactionNote.setAttribute("x", 52);
+      interactionNote.setAttribute("y", 112);
+      interactionNote.setAttribute("class", "interaction-note");
+      interactionNote.textContent = "Click notes to add waypoints for a route. Repeated notes are allowed. Click the latest note again to undo, or click empty space to clear all.";
+
+      const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+      const bassetLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      bassetLegendRing.setAttribute("cx", width - 542);
+      bassetLegendRing.setAttribute("cy", 58);
+      bassetLegendRing.setAttribute("r", 10);
+      bassetLegendRing.setAttribute("class", "range-ring range-ring-basset");
+
+      const bassetLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      bassetLegendLabel.setAttribute("x", width - 525);
+      bassetLegendLabel.setAttribute("y", 58);
+      bassetLegendLabel.setAttribute("class", "legend-label");
+      bassetLegendLabel.textContent = "Basset range";
+
+      const tenorLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      tenorLegendRing.setAttribute("cx", width - 418);
+      tenorLegendRing.setAttribute("cy", 58);
+      tenorLegendRing.setAttribute("r", 10);
+      tenorLegendRing.setAttribute("class", "range-ring range-ring-tenor");
+
+      const tenorLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      tenorLegendLabel.setAttribute("x", width - 401);
+      tenorLegendLabel.setAttribute("y", 58);
+      tenorLegendLabel.setAttribute("class", "legend-label");
+      tenorLegendLabel.textContent = "Tenor range";
+
+      const altoLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      altoLegendRing.setAttribute("cx", width - 310);
+      altoLegendRing.setAttribute("cy", 58);
+      altoLegendRing.setAttribute("r", 10);
+      altoLegendRing.setAttribute("class", "range-ring range-ring-alto");
+
+      const altoLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      altoLegendLabel.setAttribute("x", width - 293);
+      altoLegendLabel.setAttribute("y", 58);
+      altoLegendLabel.setAttribute("class", "legend-label");
+      altoLegendLabel.textContent = "Alto range";
+
+      const sopranoLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      sopranoLegendRing.setAttribute("cx", width - 186);
+      sopranoLegendRing.setAttribute("cy", 58);
+      sopranoLegendRing.setAttribute("r", 10);
+      sopranoLegendRing.setAttribute("class", "range-ring range-ring-soprano");
+
+      const sopranoLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      sopranoLegendLabel.setAttribute("x", width - 169);
+      sopranoLegendLabel.setAttribute("y", 58);
+      sopranoLegendLabel.setAttribute("class", "legend-label");
+      sopranoLegendLabel.textContent = "Soprano range";
+
+      legend.appendChild(bassetLegendRing);
+      legend.appendChild(bassetLegendLabel);
+      legend.appendChild(tenorLegendRing);
+      legend.appendChild(tenorLegendLabel);
+      legend.appendChild(altoLegendRing);
+      legend.appendChild(altoLegendLabel);
+      legend.appendChild(sopranoLegendRing);
+      legend.appendChild(sopranoLegendLabel);
+
+      const footer = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      footer.setAttribute("x", 52);
+      footer.setAttribute("y", height - 22);
+      footer.setAttribute("class", "footer");
+      footer.textContent = "Static composition grid: overlap notes show all applicable ring colors for shared recorder coverage.";
+
+      let selectedNodeKeys = [];
+      let activePathKeys = [];
+      let playbackKeys = [];
+
+      let audioContext = null;
+      let masterGain = null;
+      let activeOscillators = [];
+      let playbackToken = 0;
+
+      function ensureAudioEngine() {
+        if (!audioContext) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) {
+            interactionNote.textContent = "Audio playback is not supported in this browser.";
+            return false;
+          }
+
+          audioContext = new Ctx();
+          masterGain = audioContext.createGain();
+          masterGain.gain.value = 0.2;
+          masterGain.connect(audioContext.destination);
+        }
+        return true;
+      }
+
+      async function resumeAudioEngine() {
+        if (!ensureAudioEngine()) {
+          return false;
+        }
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
+        return true;
+      }
+
+      function midiToFrequency(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      function stopPlayback() {
+        playbackToken += 1;
+        activeOscillators.forEach(({ osc, gain }) => {
+          try {
+            gain.gain.cancelScheduledValues(0);
+            gain.gain.setValueAtTime(0.0001, audioContext ? audioContext.currentTime : 0);
+            osc.stop();
+          } catch (error) {
+            // Ignore stop errors for already-ended oscillators.
+          }
+        });
+        activeOscillators = [];
+      }
+
+      function playSingleWhole(midi, startTime, durationSeconds) {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
+
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.03);
+        gain.gain.setValueAtTime(0.2, startTime + Math.max(0.06, durationSeconds - 0.08));
+        gain.gain.linearRampToValueAtTime(0.0001, startTime + durationSeconds);
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start(startTime);
+        osc.stop(startTime + durationSeconds + 0.02);
+
+        activeOscillators.push({ osc, gain });
+      }
+
+      async function playRoute() {
+        if (!(await resumeAudioEngine())) {
+          return;
+        }
+
+        const keysToPlay = playbackKeys.length > 0 ? playbackKeys : [];
+        if (keysToPlay.length === 0) {
+          interactionNote.textContent = "No notes selected for playback. Add waypoints first.";
+          return;
+        }
+
+        const bpm = Math.min(220, Math.max(40, Number(tempoBpmInput.value) || 84));
+        tempoBpmInput.value = String(bpm);
+        const wholeDuration = (60 / bpm) * 4;
+
+        stopPlayback();
+        const myToken = playbackToken;
+        const startAt = audioContext.currentTime + 0.04;
+
+        const noteNodes = keysToPlay.map((key) => nodes.get(key)).filter(Boolean);
+        noteNodes.forEach((node, idx) => {
+          playSingleWhole(node.midi, startAt + idx * wholeDuration, wholeDuration);
+        });
+
+        interactionNote.textContent = `Playing ${noteNodes.length} whole note${noteNodes.length === 1 ? "" : "s"} at ${bpm} BPM.`;
+
+        const totalMs = Math.ceil(noteNodes.length * wholeDuration * 1000);
+        window.setTimeout(() => {
+          if (myToken !== playbackToken) {
+            return;
+          }
+          activeOscillators = [];
+          interactionNote.textContent = "Playback finished. Click Play to hear the route again.";
+        }, totalMs + 80);
+      }
+
+      const visualByKey = new Map();
+      nodeVisuals.forEach((visual) => {
+        visualByKey.set(visual.key, visual);
+      });
+
+      const maxRadius = Math.max(...Array.from(nodes.values(), (n) => Math.hypot(n.x - CENTER_X, n.y - CENTER_Y)));
+
+      function reconstructPath(previous, startKey, endKey) {
+        if (!previous.has(endKey) && startKey !== endKey) {
+          return [];
+        }
+
+        const path = [endKey];
+        let cursor = endKey;
+        while (cursor !== startKey) {
+          const parent = previous.get(cursor);
+          if (!parent) {
+            return [];
+          }
+          path.push(parent);
+          cursor = parent;
+        }
+        path.reverse();
+        return path;
+      }
+
+      function shortestPath(startKey, endKey) {
+        const queue = [startKey];
+        const previous = new Map();
+        const visited = new Set([startKey]);
+
+        while (queue.length > 0) {
+          const current = queue.shift();
+          if (current === endKey) {
+            break;
+          }
+          const neighbors = adjacency.get(current) || [];
+          neighbors.forEach((nextKey) => {
+            if (visited.has(nextKey)) {
+              return;
+            }
+            visited.add(nextKey);
+            previous.set(nextKey, current);
+            queue.push(nextKey);
+          });
+        }
+
+        return reconstructPath(previous, startKey, endKey);
+      }
+
+      function dijkstraPath(startKey, endKey, weightFn) {
+        const distances = new Map();
+        const previous = new Map();
+        const frontier = [{ key: startKey, score: 0 }];
+
+        distances.set(startKey, 0);
+
+        while (frontier.length > 0) {
+          frontier.sort((a, b) => a.score - b.score);
+          const current = frontier.shift();
+          if (current.key === endKey) {
+            break;
+          }
+          if (current.score > (distances.get(current.key) ?? Infinity)) {
+            continue;
+          }
+
+          const neighbors = adjacency.get(current.key) || [];
+          neighbors.forEach((nextKey) => {
+            const edgeCost = Math.max(0.12, weightFn(current.key, nextKey, endKey));
+            const candidate = current.score + edgeCost;
+            if (candidate < (distances.get(nextKey) ?? Infinity)) {
+              distances.set(nextKey, candidate);
+              previous.set(nextKey, current.key);
+              frontier.push({ key: nextKey, score: candidate });
+            }
+          });
+        }
+
+        return reconstructPath(previous, startKey, endKey);
+      }
+
+      function smoothWeight(currKey, nextKey) {
+        const curr = nodes.get(currKey);
+        const next = nodes.get(nextKey);
+        const stepMidi = Math.abs(next.midi - curr.midi);
+        return 1 + stepMidi / 9;
+      }
+
+      function tensionWeight(currKey, nextKey, endKey) {
+        const curr = nodes.get(currKey);
+        const next = nodes.get(nextKey);
+        const end = nodes.get(endKey);
+
+        const nextRadiusNorm = Math.hypot(next.x - CENTER_X, next.y - CENTER_Y) / maxRadius;
+        const nextMidiNorm = (next.midi - GRID_MIN_MIDI) / (GRID_MAX_MIDI - GRID_MIN_MIDI);
+        const tensionScore = 0.6 * nextRadiusNorm + 0.4 * nextMidiNorm;
+
+        const distanceToTarget = Math.hypot(next.x - end.x, next.y - end.y) / (SPACING * 10);
+        const descendingPenalty = Math.max(0, curr.midi - next.midi) / 14;
+
+        return 1.15 + distanceToTarget + descendingPenalty - 0.85 * tensionScore;
+      }
+
+      function buildPath(startKey, endKey) {
+        if (!startKey || !endKey) {
+          return [];
+        }
+
+        const mode = pathModeSelect.value;
+        if (mode === "smooth") {
+          return dijkstraPath(startKey, endKey, smoothWeight);
+        }
+        if (mode === "tension") {
+          return dijkstraPath(startKey, endKey, tensionWeight);
+        }
+        return shortestPath(startKey, endKey);
+      }
+
+      function buildPathFromWaypoints(waypointKeys) {
+        if (waypointKeys.length === 0) {
+          return [];
+        }
+        if (waypointKeys.length === 1) {
+          return [waypointKeys[0]];
+        }
+
+        const merged = [];
+        for (let i = 0; i < waypointKeys.length - 1; i += 1) {
+          const segment = buildPath(waypointKeys[i], waypointKeys[i + 1]);
+          if (segment.length === 0) {
+            return [];
+          }
+
+          if (i === 0) {
+            merged.push(...segment);
+          } else {
+            merged.push(...segment.slice(1));
+          }
+        }
+
+        return merged;
+      }
+
+      function clearPathState() {
+        selectedNodeKeys = [];
+        activePathKeys = [];
+      }
+
+      function updatePathView() {
+        const pathEdges = new Set();
+        for (let i = 0; i < activePathKeys.length - 1; i += 1) {
+          pathEdges.add(pairKey(activePathKeys[i], activePathKeys[i + 1]));
+        }
+        const pathNodeSet = new Set(activePathKeys);
+        const hasPath = activePathKeys.length > 1;
+
+        edgeVisuals.forEach((edgeVisual) => {
+          const onPath = pathEdges.has(edgeVisual.key);
+          edgeVisual.line.classList.toggle("edge-muted", hasPath && !onPath);
+          edgeVisual.line.classList.toggle("path-edge-active", onPath);
+        });
+
+        nodeVisuals.forEach((visual) => {
+          const onPath = pathNodeSet.has(visual.key);
+          const isStart = selectedNodeKeys.length > 0 && visual.key === selectedNodeKeys[0];
+          const isEnd = selectedNodeKeys.length > 1 && visual.key === selectedNodeKeys[selectedNodeKeys.length - 1];
+          const isWaypoint = selectedNodeKeys.slice(1, -1).includes(visual.key);
+
+          visual.core.classList.toggle("node-muted", hasPath && !onPath);
+          visual.core.classList.toggle("node-path", onPath);
+          visual.core.classList.toggle("node-start", isStart);
+          visual.core.classList.toggle("node-end", isEnd);
+          visual.core.classList.toggle("node-waypoint", isWaypoint);
+
+          visual.label.classList.toggle("label-muted", hasPath && !onPath);
+          visual.label.classList.toggle("label-path", onPath);
+          visual.label.classList.toggle("label-start", isStart);
+          visual.label.classList.toggle("label-end", isEnd);
+          visual.label.classList.toggle("label-waypoint", isWaypoint);
+
+          visual.rings.forEach((ring) => {
+            ring.classList.toggle("range-ring-muted", hasPath && !onPath);
+            ring.classList.toggle("range-ring-path", onPath);
+          });
+        });
+
+        let xmlKeys = [];
+        if (activePathKeys.length > 0) {
+          xmlKeys = activePathKeys;
+        } else if (selectedNodeKeys.length > 0) {
+          xmlKeys = [...selectedNodeKeys];
+        }
+        playbackKeys = [...xmlKeys];
+        void renderMusicXmlFromKeys(xmlKeys);
+
+        if (selectedNodeKeys.length === 0) {
+          interactionNote.textContent = "Click notes to add waypoints for a route. Repeated notes are allowed. Click the latest note again to undo, or click empty space to clear all.";
+          return;
+        }
+
+        const startName = visualByKey.get(selectedNodeKeys[0]).displayName;
+        if (selectedNodeKeys.length === 1) {
+          interactionNote.textContent = `Start ${startName} selected. Add more waypoints to extend the route.`;
+          return;
+        }
+
+        const endName = visualByKey.get(selectedNodeKeys[selectedNodeKeys.length - 1]).displayName;
+        const waypointCount = Math.max(0, selectedNodeKeys.length - 2);
+        const modeLabel = pathModeSelect.options[pathModeSelect.selectedIndex].text;
+        if (!hasPath) {
+          interactionNote.textContent = `No route found through the current waypoint chain.`;
+          return;
+        }
+
+        interactionNote.textContent = `${modeLabel} route: ${startName} to ${endName} with ${waypointCount} waypoint${waypointCount === 1 ? "" : "s"}, ${activePathKeys.length - 1} moves.`;
+      }
+
+      nodeVisuals.forEach((visual) => {
+        visual.hitTarget.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const clickedKey = visual.key;
+
+          if (selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1]) {
+            selectedNodeKeys.pop();
+          } else {
+            selectedNodeKeys.push(clickedKey);
+          }
+
+          activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
+
+          updatePathView();
+        });
+      });
+
+      svg.addEventListener("click", (event) => {
+        if (event.target.closest(".node-hit-target")) {
+          return;
+        }
+        clearPathState();
+        updatePathView();
+      });
+
+      pathModeSelect.addEventListener("change", () => {
+        activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
+        updatePathView();
+      });
+
+      clearPathButton.addEventListener("click", () => {
+        clearPathState();
+        updatePathView();
+      });
+
+      playRouteButton.addEventListener("click", () => {
+        void playRoute();
+      });
+
+      stopRouteButton.addEventListener("click", () => {
+        stopPlayback();
+        interactionNote.textContent = "Playback stopped.";
+      });
+
+      svg.appendChild(edgeGroup);
+      svg.appendChild(nodeGroup);
+      svg.appendChild(rangeGroup);
+      svg.appendChild(textGroup);
+      svg.appendChild(hitGroup);
+      svg.appendChild(title);
+      svg.appendChild(subtitle);
+      svg.appendChild(interactionNote);
+      svg.appendChild(legend);
+      svg.appendChild(footer);
+
+      updatePathView();
+    })();
+  </script>
+</body>
+</html>
