@@ -853,31 +853,6 @@
         return nodes.get(`${u},${v}`);
       }
 
-      const triangles = [];
-
-      function pushTriangle(nodeKeys) {
-        const sortedId = [...nodeKeys].sort().join("|");
-        if (triangles.some((triangle) => triangle.id === sortedId)) {
-          return;
-        }
-        triangles.push({ id: sortedId, nodeKeys });
-      }
-
-      nodes.forEach((node) => {
-        const a = nodeAt(node.u, node.v);
-        const b = nodeAt(node.u + 1, node.v);
-        const c = nodeAt(node.u, node.v + 1);
-        const d = nodeAt(node.u + 1, node.v + 1);
-
-        if (a && b && c) {
-          pushTriangle([a.key, b.key, c.key]);
-        }
-
-        if (b && c && d) {
-          pushTriangle([b.key, c.key, d.key]);
-        }
-      });
-
       nodes.forEach((a) => {
         directions.forEach(([du, dv]) => {
           const b = nodeAt(a.u + du, a.v + dv);
@@ -930,6 +905,32 @@
 
         addNeighbor(a.key, b.key);
         addNeighbor(b.key, a.key);
+      });
+
+      const triangles = [];
+      const triangleIds = new Set();
+
+      nodes.forEach((node) => {
+        const neighbors = adjacency.get(node.key) || [];
+        for (let i = 0; i < neighbors.length; i += 1) {
+          for (let j = i + 1; j < neighbors.length; j += 1) {
+            const left = neighbors[i];
+            const right = neighbors[j];
+            const leftNeighbors = adjacency.get(left) || [];
+            if (!leftNeighbors.includes(right)) {
+              continue;
+            }
+
+            const nodeKeys = [node.key, left, right];
+            const sortedId = [...nodeKeys].sort().join("|");
+            if (triangleIds.has(sortedId)) {
+              continue;
+            }
+
+            triangleIds.add(sortedId);
+            triangles.push({ id: sortedId, nodeKeys });
+          }
+        }
       });
 
       triangles.forEach((triangle) => {
