@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Tonnetz Grid - Recorder Ranges</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#b5472f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Tonnetz" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <style>
     :root {
       --paper: #f4f1e8;
@@ -35,6 +43,8 @@
       font-family: "EB Garamond", "Palatino Linotype", Palatino, serif;
       color: var(--ink);
       overflow: auto;
+      /* Prevent pull-to-refresh and bounce scroll interfering with the grid */
+      overscroll-behavior: none;
     }
 
     .frame {
@@ -44,7 +54,11 @@
       gap: 14px;
       width: 100%;
       min-height: 100%;
+      /* Respect notch / home indicator safe areas */
       padding: clamp(10px, 1.4vw, 22px);
+      padding-left: max(clamp(10px, 1.4vw, 22px), env(safe-area-inset-left));
+      padding-right: max(clamp(10px, 1.4vw, 22px), env(safe-area-inset-right));
+      padding-bottom: max(clamp(10px, 1.4vw, 22px), env(safe-area-inset-bottom));
     }
 
     .tonnetz-stage {
@@ -85,7 +99,10 @@
       background: #fffdf7;
       border: 1px solid rgba(31, 40, 51, 0.32);
       border-radius: 6px;
-      padding: 4px 7px;
+      padding: 6px 10px;
+      min-height: 36px;
+      /* Prevent double-tap zoom delay on controls */
+      touch-action: manipulation;
     }
 
     .path-controls button {
@@ -107,7 +124,9 @@
       background: #fffdf7;
       border: 1px solid rgba(31, 40, 51, 0.32);
       border-radius: 6px;
-      padding: 4px 6px;
+      padding: 6px 6px;
+      min-height: 36px;
+      touch-action: manipulation;
     }
 
     .score-panel {
@@ -166,6 +185,12 @@
       box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.8) inset,
         0 18px 40px rgba(18, 23, 28, 0.12);
+      /* Prevent browser pan/zoom from intercepting touch events on the SVG */
+      touch-action: none;
+      /* Suppress the blue tap-flash on iOS */
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .title {
@@ -1020,7 +1045,7 @@
         const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         hitTarget.setAttribute("cx", n.x);
         hitTarget.setAttribute("cy", n.y);
-        hitTarget.setAttribute("r", RADIUS + 7.2);
+        hitTarget.setAttribute("r", RADIUS + 12);
         hitTarget.setAttribute("class", "node-hit-target");
         hitGroup.appendChild(hitTarget);
 
@@ -1129,6 +1154,16 @@
       let masterGain = null;
       let activeOscillators = [];
       let playbackToken = 0;
+
+      // iOS Safari requires Web Audio to be unlocked on the first user gesture.
+      // Pre-create and resume the context on the first touch so playback is
+      // ready without a further async round-trip.
+      document.addEventListener("pointerdown", function unlockAudio() {
+        ensureAudioEngine();
+        if (audioContext && audioContext.state === "suspended") {
+          audioContext.resume().catch(() => {});
+        }
+      }, { once: true });
 
       function ensureAudioEngine() {
         if (!audioContext) {
@@ -1609,6 +1644,15 @@
       updatePathView();
       updateTriadView();
     })();
+  </script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {
+          // Service worker registration is best-effort; the app still works without it.
+        });
+      });
+    }
   </script>
 </body>
 </html>
