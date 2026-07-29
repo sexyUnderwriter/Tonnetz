@@ -406,6 +406,11 @@
       </svg>
     </div>
     <div class="path-controls" aria-label="Path guide controls">
+      <label for="interactionMode">Mode</label>
+      <select id="interactionMode">
+        <option value="route">Route</option>
+        <option value="triad">Triad</option>
+      </select>
       <label for="pathMode">Path</label>
       <select id="pathMode">
         <option value="shortest">Shortest</option>
@@ -435,7 +440,7 @@
       <div class="score-panel" aria-label="Rendered triad score preview panel">
         <p class="score-title">Rendered triad score (separate staff)</p>
         <div id="triadPreview" class="score-preview" role="img" aria-label="Rendered whole-note triad score preview">
-          <div class="score-status">Shift-click triangles to render the triad staff.</div>
+          <div class="score-status">Switch to Triad mode and tap triangles to render the triad staff.</div>
         </div>
       </div>
     </div>
@@ -446,6 +451,7 @@
     (function drawTonnetz() {
       const svg = document.getElementById("tonnetz");
       const pathModeSelect = document.getElementById("pathMode");
+      const interactionModeSelect = document.getElementById("interactionMode");
       const clearPathButton = document.getElementById("clearPath");
       const playRouteButton = document.getElementById("playRoute");
       const stopRouteButton = document.getElementById("stopRoute");
@@ -1045,7 +1051,7 @@
       interactionNote.setAttribute("x", 52);
       interactionNote.setAttribute("y", 112);
       interactionNote.setAttribute("class", "interaction-note");
-      interactionNote.textContent = "Click notes to build a route. Shift-click triangles to select triads. Click empty space or Clear to reset.";
+      interactionNote.textContent = "Route mode: tap notes to build a route. Switch to Triad mode to select triads. Tap empty space or Clear to reset.";
 
       const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
@@ -1117,6 +1123,7 @@
       let selectedTriangleIds = [];
       let routePlaybackEvents = [];
       let triadPlaybackEvents = [];
+      let activeMode = "route";
 
       let audioContext = null;
       let masterGain = null;
@@ -1388,7 +1395,7 @@
 
       function routeStatusMessage() {
         if (selectedNodeKeys.length === 0) {
-          return "Click notes to add waypoints for a route.";
+          return "Tap notes to add waypoints for a route.";
         }
 
         const startName = visualByKey.get(selectedNodeKeys[0]).displayName;
@@ -1408,13 +1415,23 @@
 
       function triadStatusMessage() {
         if (selectedTriangleIds.length === 0) {
-          return "Shift-click triangles to add triads.";
+          return "Tap triangles to add triads.";
         }
         return `${selectedTriangleIds.length} triad${selectedTriangleIds.length === 1 ? "" : "s"} selected for the separate staff.`;
       }
 
       function updateInteractionMessage() {
-        interactionNote.textContent = `${routeStatusMessage()} ${triadStatusMessage()}`;
+        if (activeMode === "route") {
+          interactionNote.textContent = `Route mode — ${routeStatusMessage()} Switch to Triad mode to select triads.`;
+        } else {
+          interactionNote.textContent = `Triad mode — ${triadStatusMessage()} Switch to Route mode to build a route.`;
+        }
+      }
+
+      function setMode(mode) {
+        activeMode = mode;
+        hitGroup.style.pointerEvents = mode === "triad" ? "none" : "";
+        updateInteractionMessage();
       }
 
       function updatePathView() {
@@ -1496,11 +1513,12 @@
 
       triangleVisuals.forEach((triangleVisual) => {
         triangleVisual.polygon.addEventListener("click", (event) => {
-          event.stopPropagation();
-          if (!event.shiftKey) {
-            interactionNote.textContent = "Use Shift-click on a triangle to add it to the triad staff.";
+          if (activeMode !== "triad" && !event.shiftKey) {
+            interactionNote.textContent = "Switch to Triad mode (or Shift-click) to add a triangle to the triad staff.";
             return;
           }
+
+          event.stopPropagation();
 
           const id = triangleVisual.id;
           const alreadySelected = selectedTriangleIds.includes(id);
@@ -1516,8 +1534,10 @@
 
       nodeVisuals.forEach((visual) => {
         visual.hitTarget.addEventListener("click", (event) => {
-          event.stopPropagation();
-          if (event.shiftKey) {
+          if (activeMode === "route") {
+            event.stopPropagation();
+          }
+          if (activeMode !== "route" || event.shiftKey) {
             return;
           }
 
@@ -1551,6 +1571,10 @@
       pathModeSelect.addEventListener("change", () => {
         activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
         updatePathView();
+      });
+
+      interactionModeSelect.addEventListener("change", () => {
+        setMode(interactionModeSelect.value);
       });
 
       clearPathButton.addEventListener("click", () => {
