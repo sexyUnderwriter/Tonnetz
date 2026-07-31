@@ -509,9 +509,9 @@
 
       const CENTER_X = width / 2;
       const CENTER_Y = (HEADER_BAND + (height - BOTTOM_MARGIN)) / 2;
-      const SPACING = 88;
+      const SPACING = 76;
       const SQRT3 = Math.sqrt(3);
-      const RADIUS = 15;
+      const RADIUS = 18;
 
       const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
       const musicXmlPitchMap = [
@@ -832,12 +832,19 @@
         }
       }
 
-      function nodePointFor(u, v, midi) {
-        const midiSpan = Math.max(1, GRID_MAX_MIDI - GRID_MIN_MIDI);
-        const pitchFraction = (midi - GRID_MIN_MIDI) / midiSpan;
-        const x = CENTER_X + SPACING * (u + 0.28 * v);
-        const y = HEADER_BAND + 100 + (1 - pitchFraction) * (height - HEADER_BAND - BOTTOM_MARGIN - 140);
+      function uvToPoint(u, v) {
+        const x = CENTER_X + SPACING * (u + 0.5 * v);
+        const y = CENTER_Y - SPACING * (SQRT3 / 2) * v;
         return { x, y };
+      }
+
+      function rotatePoint90Left(x, y) {
+        const dx = x - CENTER_X;
+        const dy = y - CENTER_Y;
+        return {
+          x: CENTER_X + dy,
+          y: CENTER_Y - dx
+        };
       }
 
       function inBounds(x, y) {
@@ -854,8 +861,9 @@
             continue;
           }
 
-          const pt = nodePointFor(u, v, midi);
-          if (!inBounds(pt.x, pt.y)) {
+          const pt = uvToPoint(u, v);
+          const rotated = rotatePoint90Left(pt.x, pt.y);
+          if (!inBounds(rotated.x, rotated.y)) {
             continue;
           }
 
@@ -870,8 +878,8 @@
             v,
             midi,
             name: midiToName(midi),
-            x: pt.x,
-            y: pt.y,
+            x: rotated.x,
+            y: rotated.y,
             inBasset,
             inTenor,
             inAlto,
