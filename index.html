@@ -394,7 +394,7 @@
     .tri-face {
       fill: transparent;
       stroke: transparent;
-      stroke-width: 1;
+      stroke-width: 16;
       pointer-events: all;
       touch-action: none;
       cursor: pointer;
@@ -509,9 +509,9 @@
 
       const CENTER_X = width / 2;
       const CENTER_Y = (HEADER_BAND + (height - BOTTOM_MARGIN)) / 2;
-      const SPACING = 76;
+      const SPACING = 88;
       const SQRT3 = Math.sqrt(3);
-      const RADIUS = 18;
+      const RADIUS = 15;
 
       const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
       const musicXmlPitchMap = [
@@ -832,9 +832,11 @@
         }
       }
 
-      function uvToPoint(u, v) {
-        const x = CENTER_X + SPACING * (u + 0.5 * v);
-        const y = CENTER_Y - SPACING * (SQRT3 / 2) * v;
+      function nodePointFor(u, v, midi) {
+        const midiSpan = Math.max(1, GRID_MAX_MIDI - GRID_MIN_MIDI);
+        const pitchFraction = (midi - GRID_MIN_MIDI) / midiSpan;
+        const x = CENTER_X + SPACING * (u + 0.28 * v);
+        const y = HEADER_BAND + 100 + (1 - pitchFraction) * (height - HEADER_BAND - BOTTOM_MARGIN - 140);
         return { x, y };
       }
 
@@ -852,7 +854,7 @@
             continue;
           }
 
-          const pt = uvToPoint(u, v);
+          const pt = nodePointFor(u, v, midi);
           if (!inBounds(pt.x, pt.y)) {
             continue;
           }
@@ -1052,7 +1054,7 @@
         const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         hitTarget.setAttribute("cx", n.x);
         hitTarget.setAttribute("cy", n.y);
-        hitTarget.setAttribute("r", RADIUS + 12);
+        hitTarget.setAttribute("r", RADIUS + 16);
         hitTarget.setAttribute("class", "node-hit-target");
         hitGroup.appendChild(hitTarget);
 
