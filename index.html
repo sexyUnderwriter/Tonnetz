@@ -1007,6 +1007,7 @@
         circle.setAttribute("r", RADIUS);
         circle.setAttribute("class", "node");
         circle.setAttribute("filter", "url(#softShadow)");
+        circle.setAttribute("data-note-name", n.name);
         nodeGroup.appendChild(circle);
 
         const ringClasses = [];
@@ -1039,6 +1040,7 @@
         label.setAttribute("x", n.x);
         label.setAttribute("y", n.y + 0.4);
         label.setAttribute("class", "label");
+        label.setAttribute("data-note-name", n.name);
         label.textContent = n.name;
         textGroup.appendChild(label);
 
@@ -1053,6 +1055,7 @@
           key: n.key,
           pitchClass: ((n.midi % 12) + 12) % 12,
           displayName: n.name,
+          noteName: n.name,
           core: circle,
           label,
           rings: ringElements,
@@ -1149,6 +1152,7 @@
       let routePlaybackEvents = [];
       let triadPlaybackEvents = [];
       let activeMode = "route";
+      let highlightedNoteName = null;
 
       let audioContext = null;
       let masterGain = null;
@@ -1431,6 +1435,7 @@
       function clearPathState() {
         selectedNodeKeys = [];
         activePathKeys = [];
+        highlightedNoteName = null;
       }
 
       function clearTriadState() {
@@ -1492,27 +1497,34 @@
           edgeVisual.line.classList.toggle("path-edge-active", onPath);
         });
 
+        const matchedNoteName = highlightedNoteName;
+
         nodeVisuals.forEach((visual) => {
           const onPath = pathNodeSet.has(visual.key);
           const isStart = selectedNodeKeys.length > 0 && visual.key === selectedNodeKeys[0];
           const isEnd = selectedNodeKeys.length > 1 && visual.key === selectedNodeKeys[selectedNodeKeys.length - 1];
           const isWaypoint = selectedNodeKeys.slice(1, -1).includes(visual.key);
+          const visualNoteName = visual.label.textContent.trim();
+          const isSameNote = matchedNoteName !== null && visualNoteName === matchedNoteName;
 
           visual.core.classList.toggle("node-muted", hasPath && !onPath);
           visual.core.classList.toggle("node-path", onPath);
           visual.core.classList.toggle("node-start", isStart);
           visual.core.classList.toggle("node-end", isEnd);
           visual.core.classList.toggle("node-waypoint", isWaypoint);
+          visual.core.classList.toggle("node-match", isSameNote);
 
           visual.label.classList.toggle("label-muted", hasPath && !onPath);
           visual.label.classList.toggle("label-path", onPath);
           visual.label.classList.toggle("label-start", isStart);
           visual.label.classList.toggle("label-end", isEnd);
           visual.label.classList.toggle("label-waypoint", isWaypoint);
+          visual.label.classList.toggle("label-match", isSameNote);
 
           visual.rings.forEach((ring) => {
             ring.classList.toggle("range-ring-muted", hasPath && !onPath);
             ring.classList.toggle("range-ring-path", onPath);
+            ring.classList.toggle("range-ring-match", isSameNote);
           });
         });
 
@@ -1587,12 +1599,15 @@
 
           const clickedKey = visual.key;
 
-          if (selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1]) {
+          const shouldRemove = selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1];
+
+          if (shouldRemove) {
             selectedNodeKeys.pop();
           } else {
             selectedNodeKeys.push(clickedKey);
           }
 
+          highlightedNoteName = visual.noteName;
           activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
 
           updatePathView();
