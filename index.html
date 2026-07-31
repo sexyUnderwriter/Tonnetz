@@ -1155,14 +1155,10 @@
       let activeOscillators = [];
       let playbackToken = 0;
 
-      // iOS Safari requires Web Audio to be unlocked on the first user gesture.
-      // Pre-create and resume the context on the first touch so playback is
-      // ready without a further async round-trip.
+      // iOS Safari and other browsers require Web Audio to be unlocked on the
+      // first user gesture before scheduling notes.
       document.addEventListener("pointerdown", function unlockAudio() {
-        ensureAudioEngine();
-        if (audioContext && audioContext.state === "suspended") {
-          audioContext.resume().catch(() => {});
-        }
+        void resumeAudioEngine();
       }, { once: true });
 
       function ensureAudioEngine() {
@@ -1175,7 +1171,7 @@
 
           audioContext = new Ctx();
           masterGain = audioContext.createGain();
-          masterGain.gain.value = 0.2;
+          masterGain.gain.value = 0.35;
           masterGain.connect(audioContext.destination);
         }
         return true;
@@ -1186,7 +1182,12 @@
           return false;
         }
         if (audioContext.state === "suspended") {
-          await audioContext.resume();
+          try {
+            await audioContext.resume();
+          } catch (error) {
+            interactionNote.textContent = "Audio playback could not start. Try tapping the page again or allowing audio in the browser.";
+            return false;
+          }
         }
         return true;
       }
@@ -1199,9 +1200,13 @@
         playbackToken += 1;
         activeOscillators.forEach(({ osc, gain }) => {
           try {
-            gain.gain.cancelScheduledValues(0);
-            gain.gain.setValueAtTime(0.0001, audioContext ? audioContext.currentTime : 0);
-            osc.stop();
+            if (gain && gain.gain) {
+              gain.gain.cancelScheduledValues(0);
+              gain.gain.setValueAtTime(0.0001, audioContext ? audioContext.currentTime : 0);
+            }
+            if (osc && osc.stop) {
+              osc.stop();
+            }
           } catch (error) {
             // Ignore stop errors for already-ended oscillators.
           }
@@ -1215,7 +1220,7 @@
         }
 
         const voiceGain = audioContext.createGain();
-        const voiceLevel = Math.min(0.24, 0.24 / Math.sqrt(midis.length));
+        const voiceLevel = Math.min(0.38, 0.38 / Math.sqrt(midis.length));
         voiceGain.gain.setValueAtTime(0.0001, startTime);
         voiceGain.gain.linearRampToValueAtTime(voiceLevel, startTime + 0.03);
         voiceGain.gain.setValueAtTime(voiceLevel, startTime + Math.max(0.06, durationSeconds - 0.08));
@@ -1223,13 +1228,17 @@
         voiceGain.connect(masterGain);
 
         midis.forEach((midi) => {
-          const osc = audioContext.createOscillator();
-          osc.type = "triangle";
-          osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
-          osc.connect(voiceGain);
-          osc.start(startTime);
-          osc.stop(startTime + durationSeconds + 0.02);
-          activeOscillators.push({ osc, gain: voiceGain });
+          try {
+            const osc = audioContext.createOscillator();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
+            osc.connect(voiceGain);
+            osc.start(startTime);
+            osc.stop(startTime + durationSeconds + 0.02);
+            activeOscillators.push({ osc, gain: voiceGain });
+          } catch (error) {
+            interactionNote.textContent = "Audio playback encountered a browser error. Please refresh and try again.";
+          }
         });
       }
 
