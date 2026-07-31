@@ -221,12 +221,16 @@
       fill: var(--note-fill);
       stroke: rgba(31, 40, 51, 0.36);
       stroke-width: 0.95;
+      pointer-events: all;
+      touch-action: none;
       transition: opacity 120ms ease, stroke-width 120ms ease, fill 120ms ease;
     }
 
     .node-hit-target {
       fill: transparent;
       cursor: pointer;
+      pointer-events: all;
+      touch-action: none;
     }
 
     .node-muted {
@@ -392,6 +396,7 @@
       stroke: transparent;
       stroke-width: 1;
       pointer-events: all;
+      touch-action: none;
       cursor: pointer;
       transition: fill 120ms ease, stroke 120ms ease, opacity 120ms ease;
     }
@@ -1591,6 +1596,9 @@
       });
 
       function handleNodeSelection(event, visual) {
+        if (event.cancelable) {
+          event.preventDefault();
+        }
         if (activeMode === "route") {
           event.stopPropagation();
         }
@@ -1615,35 +1623,46 @@
         previewNoteName = null;
       }
 
+      function showPreviewForVisual(visual) {
+        if (selectedNodeKeys.length > 0) {
+          return;
+        }
+        const noteName = (visual.label.textContent || "").trim() || visual.noteName || null;
+        previewNoteName = noteName;
+        updatePathView();
+      }
+
+      function clearPreviewForVisual() {
+        if (selectedNodeKeys.length > 0) {
+          return;
+        }
+        previewNoteName = null;
+        updatePathView();
+      }
+
       nodeVisuals.forEach((visual) => {
-        const showPreview = () => {
-          if (selectedNodeKeys.length > 0) {
-            return;
-          }
-          const noteName = (visual.label.textContent || "").trim() || visual.noteName || null;
-          previewNoteName = noteName;
-          updatePathView();
-        };
-
-        const clearPreview = () => {
-          if (selectedNodeKeys.length > 0) {
-            return;
-          }
-          previewNoteName = null;
-          updatePathView();
-        };
-
-        visual.core.addEventListener("mouseover", showPreview);
-        visual.core.addEventListener("mouseout", clearPreview);
-        visual.core.addEventListener("pointerover", showPreview);
-        visual.core.addEventListener("pointerout", clearPreview);
-        visual.hitTarget.addEventListener("mouseover", showPreview);
-        visual.hitTarget.addEventListener("mouseout", clearPreview);
-        visual.hitTarget.addEventListener("pointerover", showPreview);
-        visual.hitTarget.addEventListener("pointerout", clearPreview);
+        visual.core.addEventListener("mouseover", () => showPreviewForVisual(visual));
+        visual.core.addEventListener("mouseout", clearPreviewForVisual);
+        visual.core.addEventListener("pointerover", () => showPreviewForVisual(visual));
+        visual.core.addEventListener("pointerout", clearPreviewForVisual);
+        visual.core.addEventListener("touchstart", (event) => {
+          showPreviewForVisual(visual);
+          handleNodeSelection(event, visual);
+        }, { passive: false });
         visual.core.addEventListener("pointerdown", (event) => handleNodeSelection(event, visual));
+        visual.hitTarget.addEventListener("mouseover", () => showPreviewForVisual(visual));
+        visual.hitTarget.addEventListener("mouseout", clearPreviewForVisual);
+        visual.hitTarget.addEventListener("pointerover", () => showPreviewForVisual(visual));
+        visual.hitTarget.addEventListener("pointerout", clearPreviewForVisual);
+        visual.hitTarget.addEventListener("touchstart", (event) => {
+          showPreviewForVisual(visual);
+          handleNodeSelection(event, visual);
+        }, { passive: false });
         visual.hitTarget.addEventListener("pointerdown", (event) => handleNodeSelection(event, visual));
       });
+
+      svg.addEventListener("touchend", clearPreviewForVisual, { passive: false });
+      svg.addEventListener("touchcancel", clearPreviewForVisual, { passive: false });
 
       svg.addEventListener("pointerdown", (event) => {
         if (event.target.closest(".node-hit-target")) {
