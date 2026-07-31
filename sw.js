@@ -1,4 +1,4 @@
-const CACHE_NAME = "tonnetz-v1";
+const CACHE_NAME = "tonnetz-v2";
 
 // Resources to pre-cache on install (app shell).
 const PRECACHE_URLS = [

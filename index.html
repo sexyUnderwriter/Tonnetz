@@ -1153,6 +1153,7 @@
       let triadPlaybackEvents = [];
       let activeMode = "route";
       let highlightedNoteName = null;
+      let previewNoteName = null;
 
       let audioContext = null;
       let masterGain = null;
@@ -1436,6 +1437,7 @@
         selectedNodeKeys = [];
         activePathKeys = [];
         highlightedNoteName = null;
+        previewNoteName = null;
       }
 
       function clearTriadState() {
@@ -1497,14 +1499,14 @@
           edgeVisual.line.classList.toggle("path-edge-active", onPath);
         });
 
-        const matchedNoteName = highlightedNoteName;
+        const matchedNoteName = previewNoteName ?? highlightedNoteName;
 
         nodeVisuals.forEach((visual) => {
           const onPath = pathNodeSet.has(visual.key);
           const isStart = selectedNodeKeys.length > 0 && visual.key === selectedNodeKeys[0];
           const isEnd = selectedNodeKeys.length > 1 && visual.key === selectedNodeKeys[selectedNodeKeys.length - 1];
           const isWaypoint = selectedNodeKeys.slice(1, -1).includes(visual.key);
-          const visualNoteName = visual.label.textContent.trim();
+          const visualNoteName = (visual.label.textContent || "").trim();
           const isSameNote = matchedNoteName !== null && visualNoteName === matchedNoteName;
 
           visual.core.classList.toggle("node-muted", hasPath && !onPath);
@@ -1588,30 +1590,59 @@
         });
       });
 
+      function handleNodeSelection(event, visual) {
+        if (activeMode === "route") {
+          event.stopPropagation();
+        }
+        if (activeMode !== "route" || event.shiftKey) {
+          return;
+        }
+
+        const clickedKey = visual.key;
+        const shouldRemove = selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1];
+
+        if (shouldRemove) {
+          selectedNodeKeys.pop();
+        } else {
+          selectedNodeKeys.push(clickedKey);
+        }
+
+        const noteName = (visual.label.textContent || "").trim() || nodes.get(clickedKey)?.name || visual.noteName || null;
+        previewNoteName = noteName;
+        highlightedNoteName = noteName;
+        activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
+        updatePathView();
+        previewNoteName = null;
+      }
+
       nodeVisuals.forEach((visual) => {
-        visual.hitTarget.addEventListener("pointerdown", (event) => {
-          if (activeMode === "route") {
-            event.stopPropagation();
-          }
-          if (activeMode !== "route" || event.shiftKey) {
+        const showPreview = () => {
+          if (selectedNodeKeys.length > 0) {
             return;
           }
-
-          const clickedKey = visual.key;
-
-          const shouldRemove = selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1];
-
-          if (shouldRemove) {
-            selectedNodeKeys.pop();
-          } else {
-            selectedNodeKeys.push(clickedKey);
-          }
-
-          highlightedNoteName = visual.noteName;
-          activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
-
+          const noteName = (visual.label.textContent || "").trim() || visual.noteName || null;
+          previewNoteName = noteName;
           updatePathView();
-        });
+        };
+
+        const clearPreview = () => {
+          if (selectedNodeKeys.length > 0) {
+            return;
+          }
+          previewNoteName = null;
+          updatePathView();
+        };
+
+        visual.core.addEventListener("mouseover", showPreview);
+        visual.core.addEventListener("mouseout", clearPreview);
+        visual.core.addEventListener("pointerover", showPreview);
+        visual.core.addEventListener("pointerout", clearPreview);
+        visual.hitTarget.addEventListener("mouseover", showPreview);
+        visual.hitTarget.addEventListener("mouseout", clearPreview);
+        visual.hitTarget.addEventListener("pointerover", showPreview);
+        visual.hitTarget.addEventListener("pointerout", clearPreview);
+        visual.core.addEventListener("pointerdown", (event) => handleNodeSelection(event, visual));
+        visual.hitTarget.addEventListener("pointerdown", (event) => handleNodeSelection(event, visual));
       });
 
       svg.addEventListener("pointerdown", (event) => {
