@@ -763,16 +763,18 @@
         return `${baseSymbol}/${bassName}`;
       }
 
-      function buildMeasureContent(measureNumber, midis, clefSign, clefLine) {
+      function buildMeasureContent(measureNumber, midis, clefSign, clefLine, includeAttributes = false) {
         const measure = [`    <measure number="${measureNumber}">`];
-        measure.push(
-          '      <attributes>',
-          '        <divisions>1</divisions>',
-          '        <key><fifths>0</fifths></key>',
-          '        <time><beats>4</beats><beat-type>4</beat-type></time>',
-          `        <clef><sign>${clefSign}</sign><line>${clefLine}</line></clef>`,
-          '      </attributes>'
-        );
+        if (includeAttributes) {
+          measure.push(
+            '      <attributes>',
+            '        <divisions>1</divisions>',
+            '        <key><fifths>0</fifths></key>',
+            '        <time><beats>4</beats><beat-type>4</beat-type></time>',
+            `        <clef><sign>${clefSign}</sign><line>${clefLine}</line></clef>`,
+            '      </attributes>'
+          );
+        }
 
         if (midis.length === 0) {
           measure.push(
@@ -783,52 +785,45 @@
             '      </note>'
           );
         } else {
-          midis.forEach((midi, noteIndex) => {
-            const pitch = midiToMusicXmlPitch(midi);
-            measure.push('      <note>');
-            if (noteIndex > 0) {
-              measure.push('        <chord/>');
-            }
-            measure.push(
-              '        <pitch>',
-              `          <step>${pitch.step}</step>`
-            );
+          const midi = midis[0];
+          const pitch = midiToMusicXmlPitch(midi);
+          measure.push('      <note>');
+          measure.push(
+            '        <pitch>',
+            `          <step>${pitch.step}</step>`
+          );
 
-            if (pitch.alter !== 0) {
-              measure.push(`          <alter>${pitch.alter}</alter>`);
-            }
+          if (pitch.alter !== 0) {
+            measure.push(`          <alter>${pitch.alter}</alter>`);
+          }
 
-            measure.push(
-              `          <octave>${pitch.octave}</octave>`,
-              '        </pitch>',
-              '        <duration>4</duration>',
-              '        <type>whole</type>',
-              '      </note>'
-            );
-          });
+          measure.push(
+            `          <octave>${pitch.octave}</octave>`,
+            '        </pitch>',
+            '        <duration>4</duration>',
+            '        <type>whole</type>',
+            '      </note>'
+          );
         }
 
         measure.push('    </measure>');
         return measure;
       }
 
-      function buildGrandStaffMusicXml(title, measuresByPart) {
-        const partMeasures = measuresByPart.map((partMeasures, partIndex) => {
-          const clefSign = partIndex === 0 ? 'G' : 'F';
-          const clefLine = partIndex === 0 ? 2 : 4;
-          return partMeasures.map((midis, index) => buildMeasureContent(index + 1, midis, clefSign, clefLine));
-        });
+      function buildGrandStaffMusicXml(title, measures) {
+        const partMeasures = [
+          measures.map((entry, index) => buildMeasureContent(index + 1, entry.treble || [], 'G', 2, index === 0)),
+          measures.map((entry, index) => buildMeasureContent(index + 1, entry.bass || [], 'F', 4, index === 0))
+        ];
 
-        const maxMeasureCount = Math.max(...partMeasures.map((measures) => measures.length));
-        const paddedParts = partMeasures.map((measures, partIndex) => {
-          const clefSign = partIndex === 0 ? 'G' : 'F';
-          const clefLine = partIndex === 0 ? 2 : 4;
-          if (measures.length >= maxMeasureCount) {
-            return measures.flat();
+        const maxMeasureCount = Math.max(...partMeasures.map((part) => part.length));
+        const paddedParts = partMeasures.map((partMeasuresForStaff) => {
+          if (partMeasuresForStaff.length >= maxMeasureCount) {
+            return partMeasuresForStaff.flat();
           }
-          const missingMeasures = maxMeasureCount - measures.length;
-          const paddingMeasures = Array.from({ length: missingMeasures }, (_, index) => buildMeasureContent(measures.length + index + 1, [], clefSign, clefLine));
-          return [...measures.flat(), ...paddingMeasures.flat()];
+          const missingMeasures = maxMeasureCount - partMeasuresForStaff.length;
+          const paddingMeasures = Array.from({ length: missingMeasures }, (_, index) => buildMeasureContent(partMeasuresForStaff.length + index + 1, [], partMeasuresForStaff.length === 0 ? 'G' : 'F', partMeasuresForStaff.length === 0 ? 2 : 4, false));
+          return [...partMeasuresForStaff.flat(), ...paddingMeasures.flat()];
         });
 
         return [
@@ -860,14 +855,13 @@
 
       function buildRouteMusicXmlFromKeys(noteKeys) {
         const selectedNodes = noteKeys.map((key) => nodes.get(key)).filter(Boolean);
-        const measuresByPart = selectedNodes.length === 0
-          ? [[[]], [[]]]
-          : [
-              selectedNodes.filter((node) => node.midi >= 60).map((node) => [node.midi]),
-              selectedNodes.filter((node) => node.midi < 60).map((node) => [node.midi])
-            ];
+        const measures = selectedNodes.length === 0
+          ? [{ treble: [], bass: [] }]
+          : selectedNodes.map((node) => node.midi >= 60
+              ? { treble: [node.midi], bass: [] }
+              : { treble: [], bass: [node.midi] });
 
-        return buildGrandStaffMusicXml('Tonnetz Route', measuresByPart);
+        return buildGrandStaffMusicXml('Tonnetz Route', measures);
       }
 
       function buildTriadMusicXmlFromTriangles(triangleKeys) {
@@ -883,14 +877,18 @@
           })
           .filter((midis) => midis.length > 0);
 
-        const measuresByPart = triads.length === 0
-          ? [[[]], [[]]]
-          : [
-              triads.map((midis) => midis.filter((midi) => midi >= 60)),
-              triads.map((midis) => midis.filter((midi) => midi < 60))
-            ];
+        const measures = triads.length === 0
+          ? [{ treble: [], bass: [] }]
+          : triads.map((midis) => {
+              const trebleNotes = midis.filter((midi) => midi >= 60);
+              if (trebleNotes.length > 0) {
+                return { treble: [trebleNotes[trebleNotes.length - 1]], bass: [] };
+              }
+              const bassNotes = midis.filter((midi) => midi < 60);
+              return { treble: [], bass: [bassNotes[0]] };
+            });
 
-        return buildGrandStaffMusicXml('Tonnetz Triads', measuresByPart);
+        return buildGrandStaffMusicXml('Tonnetz Triads', measures);
       }
 
       let routeOsmd = null;
@@ -1950,6 +1948,68 @@
           edgeVisuals.push({ key: pairKey(a.key, b.key), line });
           addNeighbor(a.key, b.key);
           addNeighbor(b.key, a.key);
+        });
+
+        const triangles = [];
+        const triangleIds = new Set();
+
+        nodes.forEach((node) => {
+          const neighbors = adjacency.get(node.key) || [];
+          for (let i = 0; i < neighbors.length; i += 1) {
+            for (let j = i + 1; j < neighbors.length; j += 1) {
+              const left = neighbors[i];
+              const right = neighbors[j];
+              const leftNeighbors = adjacency.get(left) || [];
+              if (!leftNeighbors.includes(right)) {
+                continue;
+              }
+
+              const nodeKeys = [node.key, left, right];
+              const sortedId = [...nodeKeys].sort().join("|");
+              if (triangleIds.has(sortedId)) {
+                continue;
+              }
+
+              triangleIds.add(sortedId);
+              triangles.push({ id: sortedId, nodeKeys });
+            }
+          }
+        });
+
+        triangles.forEach((triangle) => {
+          const triangleNodes = triangle.nodeKeys
+            .map((nodeKey) => nodes.get(nodeKey))
+            .filter(Boolean);
+
+          const points = triangleNodes.map((node) => `${node.x},${node.y}`).join(" ");
+
+          const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          polygon.setAttribute("points", points);
+          polygon.setAttribute("class", "tri-face");
+          triangleGroup.appendChild(polygon);
+
+          const uniqueSortedKeys = [...triangle.nodeKeys]
+            .sort((left, right) => (nodes.get(left).midi - nodes.get(right).midi));
+
+          const centroidX = triangleNodes.reduce((sum, node) => sum + node.x, 0) / triangleNodes.length;
+          const centroidY = triangleNodes.reduce((sum, node) => sum + node.y, 0) / triangleNodes.length;
+
+          const triadLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          triadLabel.setAttribute("x", centroidX);
+          triadLabel.setAttribute("y", centroidY + 0.3);
+          triadLabel.setAttribute("class", "triad-label");
+          triadLabel.textContent = buildTriadChordLabel(uniqueSortedKeys);
+          triadTextGroup.appendChild(triadLabel);
+
+          const record = {
+            id: triangle.id,
+            nodeKeys: uniqueSortedKeys,
+            polygon,
+            triadLabel
+          };
+
+          trianglesById.set(triangle.id, record);
+          triangleVisuals.push(record);
         });
 
         nodes.forEach((n) => {
