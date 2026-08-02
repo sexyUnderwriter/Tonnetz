@@ -63,11 +63,12 @@
     .frame {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.2fr);
       grid-template-areas:
         "page-title page-title"
         "controls controls"
         "tonnetz scores";
+      grid-template-rows: auto auto minmax(0, 1fr);
       gap: 14px;
       width: 100%;
       min-height: 100%;
@@ -95,8 +96,8 @@
       grid-area: tonnetz;
       position: relative;
       width: 100%;
-      height: min(82vh, 980px);
-      min-height: 620px;
+      height: min(88vh, 1200px);
+      min-height: 720px;
     }
 
     .path-controls {
@@ -203,17 +204,18 @@
       grid-area: scores;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      height: min(82vh, 980px);
-      min-height: 620px;
+      height: min(88vh, 1200px);
+      min-height: 720px;
+      align-self: stretch;
     }
 
     .score-panel {
-      flex: 1;
+      flex: 1 1 auto;
       display: flex;
       flex-direction: column;
-      min-height: 0;
+      min-height: 220px;
     }
 
     .score-title {
@@ -226,16 +228,18 @@
 
     .score-preview {
       width: 100%;
-      min-height: 0;
+      min-height: 220px;
       flex: 1;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: flex-start;
+      justify-content: flex-start;
       overflow: auto;
       background: #fffdf7;
       border: 1px solid rgba(31, 40, 51, 0.3);
       border-radius: 8px;
-      padding: 6px;
+      padding: 10px 8px 8px;
+      transform: scale(0.92);
+      transform-origin: top left;
     }
 
     .score-status {
@@ -1042,7 +1046,13 @@
           routeOsmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(scorePreview, {
             autoResize: false,
             drawTitle: false,
-            backend: "svg"
+            backend: "svg",
+            drawingParameters: {
+              defaultFontFamily: "Times New Roman",
+              staffLineWidth: 0.8,
+              noteheadWidth: 9,
+              noteheadHeight: 8
+            }
           });
         }
 
@@ -1050,7 +1060,13 @@
           triadOsmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(triadPreview, {
             autoResize: false,
             drawTitle: false,
-            backend: "svg"
+            backend: "svg",
+            drawingParameters: {
+              defaultFontFamily: "Times New Roman",
+              staffLineWidth: 0.8,
+              noteheadWidth: 9,
+              noteheadHeight: 8
+            }
           });
         }
 
