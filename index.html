@@ -611,50 +611,36 @@
         return `${baseSymbol}/${bassName}`;
       }
 
-      function buildRouteMusicXmlFromKeys(noteKeys) {
-        const selectedNodes = noteKeys.map((key) => nodes.get(key)).filter(Boolean);
+      function buildMeasureContent(measureNumber, midis, clefSign, clefLine, includeAttributes = false) {
+        const measure = [`    <measure number="${measureNumber}">`];
+        if (includeAttributes) {
+          measure.push(
+            '      <attributes>',
+            '        <divisions>1</divisions>',
+            '        <key><fifths>0</fifths></key>',
+            '        <time><beats>4</beats><beat-type>4</beat-type></time>',
+            `        <clef><sign>${clefSign}</sign><line>${clefLine}</line></clef>`,
+            '      </attributes>'
+          );
+        }
 
-        const measures = [];
-        if (selectedNodes.length === 0) {
-          measures.push(
-            "    <measure number=\"1\">",
-            "      <attributes>",
-            "        <divisions>1</divisions>",
-            "        <key><fifths>0</fifths></key>",
-            "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-            "        <staves>1</staves>",
-            "        <clef number=\"1\"><sign>G</sign><line>2</line></clef>",
-            "      </attributes>",
-            "      <note>",
-            "        <rest/>",
-            "        <duration>4</duration>",
-            "        <voice>1</voice>",
-            "        <type>whole</type>",
-            "      </note>",
-            "    </measure>"
+        if (midis.length === 0) {
+          measure.push(
+            '      <note>',
+            '        <rest/>',
+            '        <duration>4</duration>',
+            '        <type>whole</type>',
+            '      </note>'
           );
         } else {
-          selectedNodes.forEach((node, index) => {
-            const pitch = midiToMusicXmlPitch(node.midi);
-            const measure = [
-              `    <measure number=\"${index + 1}\">`
-            ];
-
-            if (index === 0) {
-              measure.push(
-                "      <attributes>",
-                "        <divisions>1</divisions>",
-                "        <key><fifths>0</fifths></key>",
-                "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-                "        <staves>1</staves>",
-                "        <clef number=\"1\"><sign>G</sign><line>2</line></clef>",
-                "      </attributes>"
-              );
+          midis.forEach((midi, noteIndex) => {
+            const pitch = midiToMusicXmlPitch(midi);
+            measure.push('      <note>');
+            if (noteIndex > 0) {
+              measure.push('        <chord/>');
             }
-
             measure.push(
-              "      <note>",
-              "        <pitch>",
+              '        <pitch>',
               `          <step>${pitch.step}</step>`
             );
 
@@ -664,32 +650,72 @@
 
             measure.push(
               `          <octave>${pitch.octave}</octave>`,
-              "        </pitch>",
-              "        <duration>4</duration>",
-              "        <voice>1</voice>",
-              "        <type>whole</type>",
-              "      </note>",
-              "    </measure>"
+              '        </pitch>',
+              '        <duration>4</duration>',
+              '        <type>whole</type>',
+              '      </note>'
             );
-
-            measures.push(...measure);
           });
         }
 
+        measure.push('    </measure>');
+        return measure;
+      }
+
+      function buildGrandStaffMusicXml(title, measures) {
+        const partMeasures = [
+          measures.map((entry, index) => buildMeasureContent(index + 1, entry.treble || [], 'G', 2, index === 0)),
+          measures.map((entry, index) => buildMeasureContent(index + 1, entry.bass || [], 'F', 4, index === 0))
+        ];
+
+        const maxMeasureCount = Math.max(...partMeasures.map((part) => part.length));
+        const paddedParts = partMeasures.map((partMeasuresForStaff, partIndex) => {
+          if (partMeasuresForStaff.length >= maxMeasureCount) {
+            return partMeasuresForStaff.flat();
+          }
+          const clefSign = partIndex === 0 ? 'G' : 'F';
+          const clefLine = partIndex === 0 ? 2 : 4;
+          const missingMeasures = maxMeasureCount - partMeasuresForStaff.length;
+          const paddingMeasures = Array.from({ length: missingMeasures }, (_, index) => buildMeasureContent(partMeasuresForStaff.length + index + 1, [], clefSign, clefLine, false));
+          return [...partMeasuresForStaff.flat(), ...paddingMeasures.flat()];
+        });
+
         return [
-          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-          "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.1 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">",
-          "<score-partwise version=\"3.1\">",
-          "  <part-list>",
-          "    <score-part id=\"P1\">",
-          "      <part-name>Tonnetz Route</part-name>",
-          "    </score-part>",
-          "  </part-list>",
-          "  <part id=\"P1\">",
-          ...measures,
-          "  </part>",
-          "</score-partwise>"
-        ].join("\n");
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">',
+          '<score-partwise version="3.1">',
+          '  <part-list>',
+          '    <part-group type="start" number="1">',
+          '      <group-symbol>brace</group-symbol>',
+          '      <group-barline>yes</group-barline>',
+          '    </part-group>',
+          '    <score-part id="P1">',
+          `      <part-name>${title} - Treble</part-name>`,
+          '    </score-part>',
+          '    <score-part id="P2">',
+          `      <part-name>${title} - Bass</part-name>`,
+          '    </score-part>',
+          '    <part-group type="stop" number="1"/>',
+          '  </part-list>',
+          '  <part id="P1">',
+          ...paddedParts[0],
+          '  </part>',
+          '  <part id="P2">',
+          ...paddedParts[1],
+          '  </part>',
+          '</score-partwise>'
+        ].join('\n');
+      }
+
+      function buildRouteMusicXmlFromKeys(noteKeys) {
+        const selectedNodes = noteKeys.map((key) => nodes.get(key)).filter(Boolean);
+        const measures = selectedNodes.length === 0
+          ? [{ treble: [], bass: [] }]
+          : selectedNodes.map((node) => node.midi >= 60
+              ? { treble: [node.midi], bass: [] }
+              : { treble: [], bass: [node.midi] });
+
+        return buildGrandStaffMusicXml('Tonnetz Route', measures);
       }
 
       function buildTriadMusicXmlFromTriangles(triangleKeys) {
@@ -705,84 +731,14 @@
           })
           .filter((midis) => midis.length > 0);
 
-        const measures = [];
-        if (triads.length === 0) {
-          measures.push(
-            "    <measure number=\"1\">",
-            "      <attributes>",
-            "        <divisions>1</divisions>",
-            "        <key><fifths>0</fifths></key>",
-            "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-            "        <staves>1</staves>",
-            "        <clef number=\"1\"><sign>G</sign><line>2</line></clef>",
-            "      </attributes>",
-            "      <note>",
-            "        <rest/>",
-            "        <duration>4</duration>",
-            "        <voice>1</voice>",
-            "        <type>whole</type>",
-            "      </note>",
-            "    </measure>"
-          );
-        } else {
-          triads.forEach((midis, index) => {
-            const measure = [`    <measure number=\"${index + 1}\">`];
-            if (index === 0) {
-              measure.push(
-                "      <attributes>",
-                "        <divisions>1</divisions>",
-                "        <key><fifths>0</fifths></key>",
-                "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-                "        <staves>1</staves>",
-                "        <clef number=\"1\"><sign>G</sign><line>2</line></clef>",
-                "      </attributes>"
-              );
-            }
+        const measures = triads.length === 0
+          ? [{ treble: [], bass: [] }]
+          : triads.map((midis) => ({
+              treble: midis.filter((midi) => midi >= 60),
+              bass: midis.filter((midi) => midi < 60)
+            }));
 
-            midis.forEach((midi, noteIndex) => {
-              const pitch = midiToMusicXmlPitch(midi);
-              measure.push("      <note>");
-              if (noteIndex > 0) {
-                measure.push("        <chord/>");
-              }
-              measure.push(
-                "        <pitch>",
-                `          <step>${pitch.step}</step>`
-              );
-
-              if (pitch.alter !== 0) {
-                measure.push(`          <alter>${pitch.alter}</alter>`);
-              }
-
-              measure.push(
-                `          <octave>${pitch.octave}</octave>`,
-                "        </pitch>",
-                "        <duration>4</duration>",
-                "        <voice>1</voice>",
-                "        <type>whole</type>",
-                "      </note>"
-              );
-            });
-
-            measure.push("    </measure>");
-            measures.push(...measure);
-          });
-        }
-
-        return [
-          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-          "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.1 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">",
-          "<score-partwise version=\"3.1\">",
-          "  <part-list>",
-          "    <score-part id=\"P1\">",
-          "      <part-name>Tonnetz Triads</part-name>",
-          "    </score-part>",
-          "  </part-list>",
-          "  <part id=\"P1\">",
-          ...measures,
-          "  </part>",
-          "</score-partwise>"
-        ].join("\n");
+        return buildGrandStaffMusicXml('Tonnetz Triads', measures);
       }
 
       let routeOsmd = null;
