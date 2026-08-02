@@ -976,12 +976,8 @@
           '      <group-symbol>brace</group-symbol>',
           '      <group-barline>yes</group-barline>',
           '    </part-group>',
-          '    <score-part id="P1">',
-          `      <part-name>${title} - Treble</part-name>`,
-          '    </score-part>',
-          '    <score-part id="P2">',
-          `      <part-name>${title} - Bass</part-name>`,
-          '    </score-part>',
+          '    <score-part id="P1"/>',
+          '    <score-part id="P2"/>',
           '    <part-group type="stop" number="1"/>',
           '  </part-list>',
           '  <part id="P1">',
@@ -1046,13 +1042,17 @@
           routeOsmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(scorePreview, {
             autoResize: false,
             drawTitle: false,
+            drawPartNames: false,
+            drawPartAbbreviations: false,
             backend: "svg",
             drawingParameters: {
               defaultFontFamily: "Times New Roman",
               staffLineWidth: 0.8,
               noteheadWidth: 9,
               noteheadHeight: 8
-            }
+            },
+            renderSinglePart: true,
+            disableAutoBeam: true
           });
         }
 
@@ -1060,17 +1060,47 @@
           triadOsmd = new window.opensheetmusicdisplay.OpenSheetMusicDisplay(triadPreview, {
             autoResize: false,
             drawTitle: false,
+            drawPartNames: false,
+            drawPartAbbreviations: false,
             backend: "svg",
             drawingParameters: {
               defaultFontFamily: "Times New Roman",
               staffLineWidth: 0.8,
               noteheadWidth: 9,
               noteheadHeight: 8
-            }
+            },
+            renderSinglePart: true,
+            disableAutoBeam: true
           });
         }
 
         return true;
+      }
+
+      function removePartLabels(targetElement) {
+        const svg = targetElement.querySelector("svg");
+        if (!svg) {
+          return;
+        }
+
+        const textNodes = Array.from(svg.querySelectorAll("text"));
+        textNodes.forEach((textNode) => {
+          const labelText = (textNode.textContent || "").trim();
+          const className = (textNode.getAttribute("class") || "").toLowerCase();
+          if (!labelText) {
+            return;
+          }
+
+          if (
+            labelText === "P1" ||
+            labelText === "P2" ||
+            className.includes("part-name") ||
+            className.includes("part-abbreviation") ||
+            className.includes("partlabel")
+          ) {
+            textNode.remove();
+          }
+        });
       }
 
       async function renderRouteMusicXmlFromKeys(noteKeys) {
@@ -1082,6 +1112,7 @@
         try {
           await routeOsmd.load(xml);
           routeOsmd.render();
+          removePartLabels(scorePreview);
         } catch (error) {
           setScoreStatus(scorePreview, "Unable to render route MusicXML from current selection.");
         }
@@ -1096,6 +1127,7 @@
         try {
           await triadOsmd.load(xml);
           triadOsmd.render();
+          removePartLabels(triadPreview);
         } catch (error) {
           setScoreStatus(triadPreview, "Unable to render triad MusicXML from current selection.");
         }
