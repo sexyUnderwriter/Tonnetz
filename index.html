@@ -63,17 +63,17 @@
     .frame {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.2fr);
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 0.9fr);
       grid-template-areas:
         "page-title page-title"
         "controls controls"
         "tonnetz scores";
       grid-template-rows: auto auto minmax(0, 1fr);
-      gap: 14px;
+      gap: 12px;
       width: 100%;
       min-height: 100%;
       /* Respect notch / home indicator safe areas */
-      padding: clamp(10px, 1.4vw, 22px);
+      padding: clamp(10px, 1.2vw, 18px);
       padding-left: max(clamp(10px, 1.4vw, 22px), env(safe-area-inset-left));
       padding-right: max(clamp(10px, 1.4vw, 22px), env(safe-area-inset-right));
       padding-bottom: max(clamp(10px, 1.4vw, 22px), env(safe-area-inset-bottom));
@@ -96,8 +96,8 @@
       grid-area: tonnetz;
       position: relative;
       width: 100%;
-      height: min(88vh, 1200px);
-      min-height: 720px;
+      height: clamp(860px, calc(100vh - 180px), 1500px);
+      min-height: 860px;
     }
 
     .path-controls {
@@ -442,7 +442,7 @@
     }
 
     .label {
-      font-size: clamp(10px, 1vw, 13px);
+      font-size: clamp(12px, 1.2vw, 16px);
       fill: var(--ink);
       text-anchor: middle;
       dominant-baseline: central;
@@ -499,20 +499,20 @@
     }
 
     .footer {
-      font-size: clamp(10px, 0.9vw, 12px);
+      font-size: clamp(11px, 1vw, 13px);
       fill: #68747f;
       letter-spacing: 0.035em;
     }
 
     .legend-label {
-      font-size: clamp(10px, 0.92vw, 12px);
+      font-size: clamp(12px, 1.05vw, 14px);
       fill: #5e6973;
       letter-spacing: 0.025em;
       dominant-baseline: central;
     }
 
     .interaction-note {
-      font-size: clamp(10px, 0.95vw, 13px);
+      font-size: clamp(12px, 1.05vw, 14px);
       fill: #56626d;
       letter-spacing: 0.03em;
     }
@@ -588,7 +588,7 @@
       <h1>Tonnetz - Orchestral Range Field</h1>
     </div>
     <div class="tonnetz-stage">
-      <svg id="tonnetz" viewBox="0 0 1400 980" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
+      <svg id="tonnetz" viewBox="0 0 2200 1400" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
         <defs>
           <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#101923" flood-opacity="0.2" />
@@ -691,11 +691,11 @@
       const romanRootSelect = document.getElementById("romanRootSelect");
       const scorePreview = document.getElementById("scorePreview");
       const triadPreview = document.getElementById("triadPreview");
-      const width = 1400;
-      const height = 980;
-      const HEADER_BAND = 140;
-      const SIDE_MARGIN = 40;
-      const BOTTOM_MARGIN = 60;
+      const width = 2200;
+      const height = 1400;
+      const HEADER_BAND = 40;
+      const SIDE_MARGIN = 12;
+      const BOTTOM_MARGIN = 22;
 
       const instrumentDefinitions = [
         { key: "violin", label: "Violin", minMidi: 55, maxMidi: 88, colorClass: "range-ring-violin", accentVar: "--violin-accent" },
@@ -759,9 +759,9 @@
 
       const CENTER_X = width / 2;
       const CENTER_Y = (HEADER_BAND + (height - BOTTOM_MARGIN)) / 2;
-      const SPACING = 76;
+      const SPACING = 118;
       const SQRT3 = Math.sqrt(3);
-      const RADIUS = 18;
+      const RADIUS = 28;
 
       const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
       const romanNumeralsByInterval = ["I", "bII", "II", "bIII", "III", "IV", "bV", "V", "bVI", "VI", "bVII", "VII"];
@@ -2232,6 +2232,12 @@
             hitTarget
           });
         });
+
+        interactionNote = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        interactionNote.setAttribute("class", "interaction-note");
+        interactionNote.setAttribute("display", "none");
+        interactionNote.setAttribute("aria-hidden", "true");
+        textGroup.appendChild(interactionNote);
 
         const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
         const legendItems = activeSelectedInstruments.length > 0 ? activeSelectedInstruments : instrumentDefinitions.slice(0, 4);
