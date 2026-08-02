@@ -392,8 +392,19 @@
       stroke: transparent;
       stroke-width: 1;
       pointer-events: all;
-      cursor: pointer;
+      cursor: default;
       transition: fill 120ms ease, stroke 120ms ease, opacity 120ms ease;
+    }
+
+    .mode-triad .tri-face {
+      stroke: rgba(181, 71, 47, 0.22);
+      stroke-width: 1;
+      cursor: pointer;
+    }
+
+    .mode-triad .tri-face:hover {
+      fill: rgba(181, 71, 47, 0.10);
+      stroke: rgba(181, 71, 47, 0.50);
     }
 
     .tri-face-selected {
@@ -1470,6 +1481,7 @@
       function setMode(mode) {
         activeMode = mode;
         hitGroup.style.pointerEvents = mode === "triad" ? "none" : "";
+        svg.classList.toggle("mode-triad", mode === "triad");
         updateInteractionMessage();
       }
 
@@ -1599,6 +1611,9 @@
           return;
         }
         if (event.target.closest(".tri-face")) {
+          return;
+        }
+        if (event.target.closest(".node")) {
           return;
         }
         clearPathState();
