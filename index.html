@@ -62,8 +62,12 @@
 
     .frame {
       position: relative;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "page-title page-title"
+        "controls controls"
+        "tonnetz scores";
       gap: 14px;
       width: 100%;
       min-height: 100%;
@@ -74,7 +78,21 @@
       padding-bottom: max(clamp(10px, 1.4vw, 22px), env(safe-area-inset-bottom));
     }
 
+    .page-header {
+      grid-area: page-title;
+      padding: 2px 2px 0;
+    }
+
+    .page-header h1 {
+      margin: 0;
+      font-size: clamp(18px, 2vw, 30px);
+      letter-spacing: 0.02em;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
     .tonnetz-stage {
+      grid-area: tonnetz;
       position: relative;
       width: 100%;
       height: min(82vh, 980px);
@@ -82,14 +100,14 @@
     }
 
     .path-controls {
+      grid-area: controls;
       position: relative;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 9px;
-      width: fit-content;
-      max-width: 100%;
-      margin: 10px 0 0 auto;
+      width: 100%;
+      margin: 0;
       background: rgba(244, 241, 232, 0.95);
       border: 1px solid rgba(31, 40, 51, 0.22);
       border-radius: 10px;
@@ -140,6 +158,12 @@
       touch-action: manipulation;
     }
 
+    .path-controls input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
     .path-controls button {
       cursor: pointer;
     }
@@ -176,10 +200,20 @@
     }
 
     .score-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-area: scores;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
       width: 100%;
+      height: min(82vh, 980px);
+      min-height: 620px;
+    }
+
+    .score-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
     .score-title {
@@ -192,7 +226,8 @@
 
     .score-preview {
       width: 100%;
-      min-height: 360px;
+      min-height: 0;
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -520,10 +555,34 @@
       fill: #111a22;
       font-weight: 700;
     }
+
+    @media (max-width: 1100px) {
+      .frame {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+          "page-title"
+          "controls"
+          "tonnetz"
+          "scores";
+      }
+
+      .tonnetz-stage,
+      .score-grid {
+        min-height: 460px;
+        height: auto;
+      }
+
+      .score-panel {
+        min-height: 300px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="frame">
+    <div class="page-header">
+      <h1>Tonnetz - Orchestral Range Field</h1>
+    </div>
     <div class="tonnetz-stage">
       <svg id="tonnetz" viewBox="0 0 1400 980" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
         <defs>
@@ -552,6 +611,23 @@
       <select id="playbackSource">
         <option value="route">Route staff</option>
         <option value="triad">Triad staff</option>
+      </select>
+      <label for="romanNumeralsToggle">Roman</label>
+      <input id="romanNumeralsToggle" type="checkbox" aria-label="Display triad labels as Roman numerals" />
+      <label for="romanRootSelect">Root</label>
+      <select id="romanRootSelect" aria-label="Roman numeral root" disabled>
+        <option value="0" selected>C</option>
+        <option value="1">C#</option>
+        <option value="2">D</option>
+        <option value="3">Eb</option>
+        <option value="4">E</option>
+        <option value="5">F</option>
+        <option value="6">F#</option>
+        <option value="7">G</option>
+        <option value="8">Ab</option>
+        <option value="9">A</option>
+        <option value="10">Bb</option>
+        <option value="11">B</option>
       </select>
       <div class="instrument-controls">
         <label for="instrumentSelection">Instruments</label>
@@ -607,6 +683,8 @@
       const stopRouteButton = document.getElementById("stopRoute");
       const tempoBpmInput = document.getElementById("tempoBpm");
       const playbackSourceSelect = document.getElementById("playbackSource");
+      const romanNumeralsToggle = document.getElementById("romanNumeralsToggle");
+      const romanRootSelect = document.getElementById("romanRootSelect");
       const scorePreview = document.getElementById("scorePreview");
       const triadPreview = document.getElementById("triadPreview");
       const width = 1400;
@@ -682,6 +760,7 @@
       const RADIUS = 18;
 
       const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+      const romanNumeralsByInterval = ["I", "bII", "II", "bIII", "III", "IV", "bV", "V", "bVI", "VI", "bVII", "VII"];
       const musicXmlPitchMap = [
         { step: "C", alter: 0 },
         { step: "C", alter: 1 },
@@ -740,9 +819,25 @@
       }
 
       function buildTriadChordLabel(nodeKeys) {
+        const triadData = analyzeTriad(nodeKeys);
+        if (!triadData) {
+          const triadNodes = nodeKeys.map((nodeKey) => nodes.get(nodeKey)).filter(Boolean);
+          return triadNodes.map((node) => midiToPitchClassName(node.midi)).join("-");
+        }
+        const { rootPc, quality, bassPc } = triadData;
+        const rootName = pitchNames[rootPc];
+        const bassName = pitchNames[bassPc];
+        const baseSymbol = `${rootName}${quality}`;
+        if (bassPc === rootPc) {
+          return baseSymbol;
+        }
+        return `${baseSymbol}/${bassName}`;
+      }
+
+      function analyzeTriad(nodeKeys) {
         const triadNodes = nodeKeys.map((nodeKey) => nodes.get(nodeKey)).filter(Boolean);
         if (triadNodes.length < 3) {
-          return "";
+          return null;
         }
 
         const bassPc = ((triadNodes[0].midi % 12) + 12) % 12;
@@ -762,16 +857,41 @@
         });
 
         if (rootPc === null || quality === null) {
-          return triadNodes.map((node) => midiToPitchClassName(node.midi)).join("-");
+          return null;
         }
 
-        const rootName = pitchNames[rootPc];
-        const bassName = pitchNames[bassPc];
-        const baseSymbol = `${rootName}${quality}`;
+        return { rootPc, quality, bassPc };
+      }
+
+      function buildTriadRomanNumeralLabel(nodeKeys) {
+        const triadData = analyzeTriad(nodeKeys);
+        if (!triadData) {
+          return buildTriadChordLabel(nodeKeys);
+        }
+        const { rootPc, quality, bassPc } = triadData;
+        const romanRootPc = Number(romanRootSelect?.value ?? "0");
+        const rootInterval = ((rootPc - romanRootPc) + 12) % 12;
+        const bassInterval = ((bassPc - romanRootPc) + 12) % 12;
+        const degree = romanNumeralsByInterval[rootInterval];
+        let baseSymbol = degree;
+        if (quality === "m") {
+          baseSymbol = degree.toLowerCase();
+        } else if (quality === "dim") {
+          baseSymbol = `${degree.toLowerCase()}°`;
+        } else if (quality === "aug") {
+          baseSymbol = `${degree}+`;
+        }
         if (bassPc === rootPc) {
           return baseSymbol;
         }
-        return `${baseSymbol}/${bassName}`;
+        return `${baseSymbol}/${romanNumeralsByInterval[bassInterval]}`;
+      }
+
+      function formatTriadLabel(nodeKeys) {
+        if (romanNumeralsToggle && romanNumeralsToggle.checked) {
+          return buildTriadRomanNumeralLabel(nodeKeys);
+        }
+        return buildTriadChordLabel(nodeKeys);
       }
 
       function buildMeasureContent(measureNumber, midis, clefSign, clefLine, includeAttributes = false) {
@@ -1219,7 +1339,7 @@
           triadLabel.setAttribute("x", centroidX);
           triadLabel.setAttribute("y", centroidY + 0.3);
           triadLabel.setAttribute("class", "triad-label");
-          triadLabel.textContent = buildTriadChordLabel(uniqueSortedKeys);
+          triadLabel.textContent = formatTriadLabel(uniqueSortedKeys);
           triadTextGroup.appendChild(triadLabel);
 
           const record = {
@@ -1756,6 +1876,7 @@
         const selectedSet = new Set(selectedTriangleIds);
 
         triangleVisuals.forEach((triangleVisual) => {
+          triangleVisual.triadLabel.textContent = formatTriadLabel(triangleVisual.nodeKeys);
           triangleVisual.polygon.classList.toggle("tri-face-selected", selectedSet.has(triangleVisual.id));
           triangleVisual.triadLabel.classList.toggle("triad-label-selected", selectedSet.has(triangleVisual.id));
         });
@@ -1847,6 +1968,15 @@
 
       interactionModeSelect.addEventListener("change", () => {
         setMode(interactionModeSelect.value);
+      });
+
+      romanNumeralsToggle.addEventListener("change", () => {
+        romanRootSelect.disabled = !romanNumeralsToggle.checked;
+        updateTriadView();
+      });
+
+      romanRootSelect.addEventListener("change", () => {
+        updateTriadView();
       });
 
       const refreshGraphFromSelection = () => {
@@ -2015,7 +2145,7 @@
           triadLabel.setAttribute("x", centroidX);
           triadLabel.setAttribute("y", centroidY + 0.3);
           triadLabel.setAttribute("class", "triad-label");
-          triadLabel.textContent = buildTriadChordLabel(uniqueSortedKeys);
+          triadLabel.textContent = formatTriadLabel(uniqueSortedKeys);
           triadTextGroup.appendChild(triadLabel);
 
           const record = {
