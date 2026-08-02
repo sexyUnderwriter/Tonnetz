@@ -1451,25 +1451,6 @@
           });
         });
 
-        const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        title.setAttribute("x", 52);
-        title.setAttribute("y", 58);
-        title.setAttribute("class", "title");
-        title.textContent = "Tonnetz - Orchestral Range Field";
-
-        const subtitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        subtitle.setAttribute("x", 52);
-        subtitle.setAttribute("y", 86);
-        subtitle.setAttribute("class", "subtitle");
-        const instrumentSummary = activeSelectedInstruments.map((instrument) => instrument.label).join(", ");
-        // subtitle.textContent = `Centered on Middle C (C4) with ${instrumentSummary || "selected instruments"} up to accomplished amateur range`;
-
-        interactionNote = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        interactionNote.setAttribute("x", 52);
-        interactionNote.setAttribute("y", 112);
-        interactionNote.setAttribute("class", "interaction-note");
-        interactionNote.textContent = "Route mode: tap notes to build a route. Switch to Triad mode to select triads. Tap empty space or Clear to reset.";
-
         const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
         const legendItems = activeSelectedInstruments.length > 0 ? activeSelectedInstruments : instrumentDefinitions.slice(0, 4);
 
@@ -1513,9 +1494,6 @@
         svg.appendChild(rangeGroup);
         svg.appendChild(textGroup);
         svg.appendChild(hitGroup);
-        svg.appendChild(title);
-        svg.appendChild(subtitle);
-        svg.appendChild(interactionNote);
         svg.appendChild(legend);
         svg.appendChild(footer);
 
@@ -2255,25 +2233,6 @@
           });
         });
 
-        const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        title.setAttribute("x", 52);
-        title.setAttribute("y", 58);
-        title.setAttribute("class", "title");
-        title.textContent = "Tonnetz - Orchestral Range Field";
-
-        const subtitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        subtitle.setAttribute("x", 52);
-        subtitle.setAttribute("y", 86);
-        subtitle.setAttribute("class", "subtitle");
-        const instrumentSummary = activeSelectedInstruments.map((instrument) => instrument.label).join(", ");
-     //   subtitle.textContent = `Centered on Middle C (C4) with ${instrumentSummary || "selected instruments"} up to accomplished amateur range`;
-
-        interactionNote = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        interactionNote.setAttribute("x", 52);
-        interactionNote.setAttribute("y", 112);
-        interactionNote.setAttribute("class", "interaction-note");
-        interactionNote.textContent = "Route mode: tap notes to build a route. Switch to Triad mode to select triads. Tap empty space or Clear to reset.";
-
         const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
         const legendItems = activeSelectedInstruments.length > 0 ? activeSelectedInstruments : instrumentDefinitions.slice(0, 4);
         legendItems.forEach((instrument, index) => {
@@ -2307,9 +2266,6 @@
         svg.appendChild(rangeGroup);
         svg.appendChild(textGroup);
         svg.appendChild(hitGroup);
-        svg.appendChild(title);
-        svg.appendChild(subtitle);
-        svg.appendChild(interactionNote);
         svg.appendChild(legend);
         svg.appendChild(footer);
 
