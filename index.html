@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tonnetz Grid - Recorder Ranges</title>
+  <title>Tonnetz Grid - Orchestral Ranges</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
@@ -21,6 +21,19 @@
       --basset-accent: #6a4c93;
       --alto-accent: #2f7d8c;
       --soprano-accent: #7d5a2f;
+      --violin-accent: #5c6bc0;
+      --viola-accent: #8d6e63;
+      --cello-accent: #2e7d32;
+      --bass-accent: #6a1b9a;
+      --flute-accent: #00897b;
+      --oboe-accent: #c2185b;
+      --clarinet-accent: #ef6c00;
+      --bassoon-accent: #455a64;
+      --horn-accent: #1976d2;
+      --trumpet-accent: #d32f2f;
+      --trombone-accent: #5d4037;
+      --tuba-accent: #7b1fa2;
+      --harp-accent: #f9a825;
       --line: #8f9da6;
       --line-soft: #b8c1c7;
       --note-fill: #faf8f2;
@@ -89,6 +102,28 @@
       color: #4f5b67;
       letter-spacing: 0.03em;
       text-transform: uppercase;
+    }
+
+    .instrument-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 8px;
+      margin-left: 2px;
+    }
+
+    .instrument-controls select {
+      min-width: 220px;
+      max-width: min(100%, 320px);
+      font-family: inherit;
+      font-size: 12px;
+      color: #1f2833;
+      background: #fffdf7;
+      border: 1px solid rgba(31, 40, 51, 0.32);
+      border-radius: 6px;
+      padding: 6px 8px;
+      min-height: 36px;
+      touch-action: manipulation;
     }
 
     .path-controls select,
@@ -221,12 +256,16 @@
       fill: var(--note-fill);
       stroke: rgba(31, 40, 51, 0.36);
       stroke-width: 0.95;
+      pointer-events: all;
+      touch-action: none;
       transition: opacity 120ms ease, stroke-width 120ms ease, fill 120ms ease;
     }
 
     .node-hit-target {
       fill: transparent;
       cursor: pointer;
+      pointer-events: all;
+      touch-action: none;
     }
 
     .node-muted {
@@ -311,6 +350,58 @@
       stroke: var(--soprano-accent);
     }
 
+    .range-ring-violin {
+      stroke: var(--violin-accent);
+    }
+
+    .range-ring-viola {
+      stroke: var(--viola-accent);
+    }
+
+    .range-ring-cello {
+      stroke: var(--cello-accent);
+    }
+
+    .range-ring-bass {
+      stroke: var(--bass-accent);
+    }
+
+    .range-ring-flute {
+      stroke: var(--flute-accent);
+    }
+
+    .range-ring-oboe {
+      stroke: var(--oboe-accent);
+    }
+
+    .range-ring-clarinet {
+      stroke: var(--clarinet-accent);
+    }
+
+    .range-ring-bassoon {
+      stroke: var(--bassoon-accent);
+    }
+
+    .range-ring-horn {
+      stroke: var(--horn-accent);
+    }
+
+    .range-ring-trumpet {
+      stroke: var(--trumpet-accent);
+    }
+
+    .range-ring-trombone {
+      stroke: var(--trombone-accent);
+    }
+
+    .range-ring-tuba {
+      stroke: var(--tuba-accent);
+    }
+
+    .range-ring-harp {
+      stroke: var(--harp-accent);
+    }
+
     .label {
       font-size: clamp(10px, 1vw, 13px);
       fill: var(--ink);
@@ -390,10 +481,22 @@
     .tri-face {
       fill: transparent;
       stroke: transparent;
-      stroke-width: 1;
+      stroke-width: 16;
       pointer-events: all;
-      cursor: pointer;
+      touch-action: none;
+      cursor: default;
       transition: fill 120ms ease, stroke 120ms ease, opacity 120ms ease;
+    }
+
+    .mode-triad .tri-face {
+      stroke: rgba(181, 71, 47, 0.22);
+      stroke-width: 1;
+      cursor: pointer;
+    }
+
+    .mode-triad .tri-face:hover {
+      fill: rgba(181, 71, 47, 0.10);
+      stroke: rgba(181, 71, 47, 0.50);
     }
 
     .tri-face-selected {
@@ -422,7 +525,7 @@
 <body>
   <div class="frame">
     <div class="tonnetz-stage">
-      <svg id="tonnetz" viewBox="0 0 1400 980" role="img" aria-label="Tonnetz triangle grid centered on middle C with basset, tenor, alto, and soprano recorder ranges">
+      <svg id="tonnetz" viewBox="0 0 1400 980" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
         <defs>
           <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#101923" flood-opacity="0.2" />
@@ -450,6 +553,28 @@
         <option value="route">Route staff</option>
         <option value="triad">Triad staff</option>
       </select>
+      <div class="instrument-controls">
+        <label for="instrumentSelection">Instruments</label>
+        <select id="instrumentSelection" multiple size="6" aria-label="Select orchestral instruments">
+          <option value="violin" selected>Violin</option>
+          <option value="viola" selected>Viola</option>
+          <option value="cello" selected>Cello</option>
+          <option value="bass">Double bass</option>
+          <option value="flute" selected>Flute</option>
+          <option value="soprano-recorder">Soprano recorder</option>
+          <option value="alto-recorder">Alto recorder</option>
+          <option value="tenor-recorder">Tenor recorder</option>
+          <option value="bass-recorder">Bass recorder</option>
+          <option value="oboe">Oboe</option>
+          <option value="clarinet">Clarinet</option>
+          <option value="bassoon">Bassoon</option>
+          <option value="horn" selected>Horn</option>
+          <option value="trumpet">Trumpet</option>
+          <option value="trombone">Trombone</option>
+          <option value="tuba">Tuba</option>
+          <option value="harp">Harp</option>
+        </select>
+      </div>
       <div class="tempo-wrap">
         <label for="tempoBpm">BPM</label>
         <input id="tempoBpm" type="number" min="40" max="220" value="84" />
@@ -490,17 +615,65 @@
       const SIDE_MARGIN = 40;
       const BOTTOM_MARGIN = 60;
 
-      // Recorder ranges used in this static score-planning grid.
-      const BASSET_MIN_MIDI = 53; // F3
-      const BASSET_MAX_MIDI = 79; // G5
-      const TENOR_MIN_MIDI = 60; // C4
-      const TENOR_MAX_MIDI = 86; // D6
-      const ALTO_MIN_MIDI = 65;  // F4
-      const ALTO_MAX_MIDI = 91;  // G6
-      const SOPRANO_MIN_MIDI = 72; // C5
-      const SOPRANO_MAX_MIDI = 98; // D7
-      const GRID_MIN_MIDI = Math.min(BASSET_MIN_MIDI, TENOR_MIN_MIDI, ALTO_MIN_MIDI);
-      const GRID_MAX_MIDI = Math.max(BASSET_MAX_MIDI, TENOR_MAX_MIDI, ALTO_MAX_MIDI, SOPRANO_MAX_MIDI);
+      const instrumentDefinitions = [
+        { key: "violin", label: "Violin", minMidi: 55, maxMidi: 88, colorClass: "range-ring-violin", accentVar: "--violin-accent" },
+        { key: "viola", label: "Viola", minMidi: 48, maxMidi: 81, colorClass: "range-ring-viola", accentVar: "--viola-accent" },
+        { key: "cello", label: "Cello", minMidi: 36, maxMidi: 72, colorClass: "range-ring-cello", accentVar: "--cello-accent" },
+        { key: "bass", label: "Double bass", minMidi: 28, maxMidi: 60, colorClass: "range-ring-bass", accentVar: "--bass-accent" },
+        { key: "flute", label: "Flute", minMidi: 60, maxMidi: 84, colorClass: "range-ring-flute", accentVar: "--flute-accent" },
+        { key: "soprano-recorder", label: "Soprano recorder", minMidi: 60, maxMidi: 84, colorClass: "range-ring-soprano", accentVar: "--soprano-accent" },
+        { key: "alto-recorder", label: "Alto recorder", minMidi: 53, maxMidi: 77, colorClass: "range-ring-alto", accentVar: "--alto-accent" },
+        { key: "tenor-recorder", label: "Tenor recorder", minMidi: 48, maxMidi: 72, colorClass: "range-ring-tenor", accentVar: "--tenor-accent" },
+        { key: "bass-recorder", label: "Bass recorder", minMidi: 41, maxMidi: 65, colorClass: "range-ring-basset", accentVar: "--basset-accent" },
+        { key: "oboe", label: "Oboe", minMidi: 58, maxMidi: 82, colorClass: "range-ring-oboe", accentVar: "--oboe-accent" },
+        { key: "clarinet", label: "Clarinet", minMidi: 50, maxMidi: 79, colorClass: "range-ring-clarinet", accentVar: "--clarinet-accent" },
+        { key: "bassoon", label: "Bassoon", minMidi: 34, maxMidi: 67, colorClass: "range-ring-bassoon", accentVar: "--bassoon-accent" },
+        { key: "horn", label: "Horn", minMidi: 45, maxMidi: 77, colorClass: "range-ring-horn", accentVar: "--horn-accent" },
+        { key: "trumpet", label: "Trumpet", minMidi: 56, maxMidi: 83, colorClass: "range-ring-trumpet", accentVar: "--trumpet-accent" },
+        { key: "trombone", label: "Trombone", minMidi: 37, maxMidi: 71, colorClass: "range-ring-trombone", accentVar: "--trombone-accent" },
+        { key: "tuba", label: "Tuba", minMidi: 29, maxMidi: 60, colorClass: "range-ring-tuba", accentVar: "--tuba-accent" },
+        { key: "harp", label: "Harp", minMidi: 32, maxMidi: 76, colorClass: "range-ring-harp", accentVar: "--harp-accent" }
+      ];
+
+      const instrumentSelection = document.getElementById("instrumentSelection");
+      const selectionStorageKey = "tonnetz-instrument-selection";
+
+      function selectedInstrumentKeys() {
+        return Array.from(instrumentSelection.selectedOptions).map((option) => option.value);
+      }
+
+      function persistInstrumentSelection() {
+        try {
+          window.sessionStorage.setItem(selectionStorageKey, JSON.stringify(selectedInstrumentKeys()));
+        } catch (error) {
+          // Ignore storage failures in privacy-restricted browsers.
+        }
+      }
+
+      function restoreInstrumentSelection() {
+        try {
+          const stored = window.sessionStorage.getItem(selectionStorageKey);
+          if (!stored) {
+            return;
+          }
+          const storedKeys = JSON.parse(stored);
+          if (!Array.isArray(storedKeys)) {
+            return;
+          }
+          Array.from(instrumentSelection.options).forEach((option) => {
+            option.selected = storedKeys.includes(option.value);
+          });
+        } catch (error) {
+          // Ignore invalid stored selections.
+        }
+      }
+
+      function activeInstruments() {
+        return instrumentDefinitions.filter((instrument) => selectedInstrumentKeys().includes(instrument.key));
+      }
+
+      const GRID_MIN_MIDI = Math.min(...instrumentDefinitions.map((instrument) => instrument.minMidi));
+      const GRID_MAX_MIDI = Math.max(...instrumentDefinitions.map((instrument) => instrument.maxMidi));
 
       const CENTER_X = width / 2;
       const CENTER_Y = (HEADER_BAND + (height - BOTTOM_MARGIN)) / 2;
@@ -532,7 +705,8 @@
 
       function midiToMusicXmlPitch(midi) {
         const pc = ((midi % 12) + 12) % 12;
-        const octave = Math.floor(midi / 12) - 1;
+        const relativeToMiddleC = midi - 60;
+        const octave = 4 + Math.floor(relativeToMiddleC / 12);
         const pitch = musicXmlPitchMap[pc];
         return {
           step: pitch.step,
@@ -600,47 +774,36 @@
         return `${baseSymbol}/${bassName}`;
       }
 
-      function buildRouteMusicXmlFromKeys(noteKeys) {
-        const selectedNodes = noteKeys.map((key) => nodes.get(key)).filter(Boolean);
+      function buildMeasureContent(measureNumber, midis, clefSign, clefLine, includeAttributes = false) {
+        const measure = [`    <measure number="${measureNumber}">`];
+        if (includeAttributes) {
+          measure.push(
+            '      <attributes>',
+            '        <divisions>1</divisions>',
+            '        <key><fifths>0</fifths></key>',
+            '        <time><beats>4</beats><beat-type>4</beat-type></time>',
+            `        <clef><sign>${clefSign}</sign><line>${clefLine}</line></clef>`,
+            '      </attributes>'
+          );
+        }
 
-        const measures = [];
-        if (selectedNodes.length === 0) {
-          measures.push(
-            "    <measure number=\"1\">",
-            "      <attributes>",
-            "        <divisions>1</divisions>",
-            "        <key><fifths>0</fifths></key>",
-            "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-            "        <clef><sign>G</sign><line>2</line></clef>",
-            "      </attributes>",
-            "      <note>",
-            "        <rest/>",
-            "        <duration>4</duration>",
-            "        <type>whole</type>",
-            "      </note>",
-            "    </measure>"
+        if (midis.length === 0) {
+          measure.push(
+            '      <note>',
+            '        <rest/>',
+            '        <duration>4</duration>',
+            '        <type>whole</type>',
+            '      </note>'
           );
         } else {
-          selectedNodes.forEach((node, index) => {
-            const pitch = midiToMusicXmlPitch(node.midi);
-            const measure = [
-              `    <measure number=\"${index + 1}\">`
-            ];
-
-            if (index === 0) {
-              measure.push(
-                "      <attributes>",
-                "        <divisions>1</divisions>",
-                "        <key><fifths>0</fifths></key>",
-                "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-                "        <clef><sign>G</sign><line>2</line></clef>",
-                "      </attributes>"
-              );
+          midis.forEach((midi, noteIndex) => {
+            const pitch = midiToMusicXmlPitch(midi);
+            measure.push('      <note>');
+            if (noteIndex > 0) {
+              measure.push('        <chord/>');
             }
-
             measure.push(
-              "      <note>",
-              "        <pitch>",
+              '        <pitch>',
               `          <step>${pitch.step}</step>`
             );
 
@@ -650,31 +813,72 @@
 
             measure.push(
               `          <octave>${pitch.octave}</octave>`,
-              "        </pitch>",
-              "        <duration>4</duration>",
-              "        <type>whole</type>",
-              "      </note>",
-              "    </measure>"
+              '        </pitch>',
+              '        <duration>4</duration>',
+              '        <type>whole</type>',
+              '      </note>'
             );
-
-            measures.push(...measure);
           });
         }
 
+        measure.push('    </measure>');
+        return measure;
+      }
+
+      function buildGrandStaffMusicXml(title, measures) {
+        const partMeasures = [
+          measures.map((entry, index) => buildMeasureContent(index + 1, entry.treble || [], 'G', 2, index === 0)),
+          measures.map((entry, index) => buildMeasureContent(index + 1, entry.bass || [], 'F', 4, index === 0))
+        ];
+
+        const maxMeasureCount = Math.max(...partMeasures.map((part) => part.length));
+        const paddedParts = partMeasures.map((partMeasuresForStaff, partIndex) => {
+          if (partMeasuresForStaff.length >= maxMeasureCount) {
+            return partMeasuresForStaff.flat();
+          }
+          const clefSign = partIndex === 0 ? 'G' : 'F';
+          const clefLine = partIndex === 0 ? 2 : 4;
+          const missingMeasures = maxMeasureCount - partMeasuresForStaff.length;
+          const paddingMeasures = Array.from({ length: missingMeasures }, (_, index) => buildMeasureContent(partMeasuresForStaff.length + index + 1, [], clefSign, clefLine, false));
+          return [...partMeasuresForStaff.flat(), ...paddingMeasures.flat()];
+        });
+
         return [
-          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-          "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.1 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">",
-          "<score-partwise version=\"3.1\">",
-          "  <part-list>",
-          "    <score-part id=\"P1\">",
-          "      <part-name>Tonnetz Route</part-name>",
-          "    </score-part>",
-          "  </part-list>",
-          "  <part id=\"P1\">",
-          ...measures,
-          "  </part>",
-          "</score-partwise>"
-        ].join("\n");
+          '<?xml version="1.0" encoding="UTF-8"?>',
+          '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">',
+          '<score-partwise version="3.1">',
+          '  <part-list>',
+          '    <part-group type="start" number="1">',
+          '      <group-symbol>brace</group-symbol>',
+          '      <group-barline>yes</group-barline>',
+          '    </part-group>',
+          '    <score-part id="P1">',
+          `      <part-name>${title} - Treble</part-name>`,
+          '    </score-part>',
+          '    <score-part id="P2">',
+          `      <part-name>${title} - Bass</part-name>`,
+          '    </score-part>',
+          '    <part-group type="stop" number="1"/>',
+          '  </part-list>',
+          '  <part id="P1">',
+          ...paddedParts[0],
+          '  </part>',
+          '  <part id="P2">',
+          ...paddedParts[1],
+          '  </part>',
+          '</score-partwise>'
+        ].join('\n');
+      }
+
+      function buildRouteMusicXmlFromKeys(noteKeys) {
+        const selectedNodes = noteKeys.map((key) => nodes.get(key)).filter(Boolean);
+        const measures = selectedNodes.length === 0
+          ? [{ treble: [], bass: [] }]
+          : selectedNodes.map((node) => node.midi >= 60
+              ? { treble: [node.midi], bass: [] }
+              : { treble: [], bass: [node.midi] });
+
+        return buildGrandStaffMusicXml('Tonnetz Route', measures);
       }
 
       function buildTriadMusicXmlFromTriangles(triangleKeys) {
@@ -690,80 +894,14 @@
           })
           .filter((midis) => midis.length > 0);
 
-        const measures = [];
-        if (triads.length === 0) {
-          measures.push(
-            "    <measure number=\"1\">",
-            "      <attributes>",
-            "        <divisions>1</divisions>",
-            "        <key><fifths>0</fifths></key>",
-            "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-            "        <clef><sign>G</sign><line>2</line></clef>",
-            "      </attributes>",
-            "      <note>",
-            "        <rest/>",
-            "        <duration>4</duration>",
-            "        <type>whole</type>",
-            "      </note>",
-            "    </measure>"
-          );
-        } else {
-          triads.forEach((midis, index) => {
-            const measure = [`    <measure number=\"${index + 1}\">`];
-            if (index === 0) {
-              measure.push(
-                "      <attributes>",
-                "        <divisions>1</divisions>",
-                "        <key><fifths>0</fifths></key>",
-                "        <time><beats>4</beats><beat-type>4</beat-type></time>",
-                "        <clef><sign>G</sign><line>2</line></clef>",
-                "      </attributes>"
-              );
-            }
+        const measures = triads.length === 0
+          ? [{ treble: [], bass: [] }]
+          : triads.map((midis) => ({
+              treble: midis.filter((midi) => midi >= 60),
+              bass: midis.filter((midi) => midi < 60)
+            }));
 
-            midis.forEach((midi, noteIndex) => {
-              const pitch = midiToMusicXmlPitch(midi);
-              measure.push("      <note>");
-              if (noteIndex > 0) {
-                measure.push("        <chord/>");
-              }
-              measure.push(
-                "        <pitch>",
-                `          <step>${pitch.step}</step>`
-              );
-
-              if (pitch.alter !== 0) {
-                measure.push(`          <alter>${pitch.alter}</alter>`);
-              }
-
-              measure.push(
-                `          <octave>${pitch.octave}</octave>`,
-                "        </pitch>",
-                "        <duration>4</duration>",
-                "        <type>whole</type>",
-                "      </note>"
-              );
-            });
-
-            measure.push("    </measure>");
-            measures.push(...measure);
-          });
-        }
-
-        return [
-          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-          "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.1 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">",
-          "<score-partwise version=\"3.1\">",
-          "  <part-list>",
-          "    <score-part id=\"P1\">",
-          "      <part-name>Tonnetz Triads</part-name>",
-          "    </score-part>",
-          "  </part-list>",
-          "  <part id=\"P1\">",
-          ...measures,
-          "  </part>",
-          "</score-partwise>"
-        ].join("\n");
+        return buildGrandStaffMusicXml('Tonnetz Triads', measures);
       }
 
       let routeOsmd = null;
@@ -837,43 +975,36 @@
         return x > SIDE_MARGIN && x < width - SIDE_MARGIN && y > HEADER_BAND && y < height - BOTTOM_MARGIN;
       }
 
-      const nodes = new Map();
-      const searchExtent = 16;
-
-      for (let u = -searchExtent; u <= searchExtent; u += 1) {
-        for (let v = -searchExtent; v <= searchExtent; v += 1) {
-          const midi = 60 + 7 * u + 4 * v;
-          if (midi < GRID_MIN_MIDI || midi > GRID_MAX_MIDI) {
-            continue;
-          }
-
-          const pt = uvToPoint(u, v);
-          if (!inBounds(pt.x, pt.y)) {
-            continue;
-          }
-
-          const key = `${u},${v}`;
-          const inBasset = midi >= BASSET_MIN_MIDI && midi <= BASSET_MAX_MIDI;
-          const inTenor = midi >= TENOR_MIN_MIDI && midi <= TENOR_MAX_MIDI;
-          const inAlto = midi >= ALTO_MIN_MIDI && midi <= ALTO_MAX_MIDI;
-          const inSoprano = midi >= SOPRANO_MIN_MIDI && midi <= SOPRANO_MAX_MIDI;
-          nodes.set(key, {
-            key,
-            u,
-            v,
-            midi,
-            name: midiToName(midi),
-            x: pt.x,
-            y: pt.y,
-            inBasset,
-            inTenor,
-            inAlto,
-            inSoprano
-          });
-        }
+      let nodes = new Map();
+      let edgePairs = [];
+      let adjacency = new Map();
+      let trianglesById = new Map();
+      let triangleGroup = null;
+      let triadTextGroup = null;
+      let edgeGroup = null;
+      let nodeGroup = null;
+      let rangeGroup = null;
+      let textGroup = null;
+      let hitGroup = null;
+      let nodeVisuals = [];
+      let triangleVisuals = [];
+      let edgeVisuals = [];
+      let visualByKey = new Map();
+      let interactionNote = null;
+      let maxRadius = 0;
+      let graphRenderFrame = null;
+      let activeMode = "route";
+      let selectedNodeKeys = [];
+      let activePathKeys = [];
+      let selectedTriangleIds = [];
+      let routePlaybackEvents = [];
+      let triadPlaybackEvents = [];
+      let highlightedNoteName = null;
+      let previewNoteName = null;
+      function currentInteractionMode() {
+        return interactionModeSelect && interactionModeSelect.value ? interactionModeSelect.value : "route";
       }
-
-      const edgePairs = [];
+      const searchExtent = 16;
       const directions = [
         [1, 0],
         [0, 1],
@@ -883,29 +1014,6 @@
       function nodeAt(u, v) {
         return nodes.get(`${u},${v}`);
       }
-
-      nodes.forEach((a) => {
-        directions.forEach(([du, dv]) => {
-          const b = nodeAt(a.u + du, a.v + dv);
-          if (!b) {
-            return;
-          }
-          edgePairs.push([a, b]);
-        });
-      });
-
-      const triangleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const triadTextGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const edgeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const rangeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const textGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const hitGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const nodeVisuals = [];
-      const triangleVisuals = [];
-      const edgeVisuals = [];
-      const adjacency = new Map();
-      const trianglesById = new Map();
 
       function pairKey(aKey, bKey) {
         return aKey < bKey ? `${aKey}|${bKey}` : `${bKey}|${aKey}`;
@@ -918,251 +1026,357 @@
         adjacency.get(aKey).push(bKey);
       }
 
-      edgePairs.forEach(([a, b]) => {
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", a.x);
-        line.setAttribute("y1", a.y);
-        line.setAttribute("x2", b.x);
-        line.setAttribute("y2", b.y);
-
-        const centerDistance = Math.hypot((a.x + b.x) * 0.5 - CENTER_X, (a.y + b.y) * 0.5 - CENTER_Y);
-        line.setAttribute("class", centerDistance < 260 ? "tri-line-strong" : "tri-line");
-        edgeGroup.appendChild(line);
-
-        edgeVisuals.push({
-          key: pairKey(a.key, b.key),
-          line
+      function bindNodeInteractions() {
+        nodeVisuals.forEach((visual) => {
+          visual.core.addEventListener("mouseover", () => showPreviewForVisual(visual));
+          visual.core.addEventListener("mouseout", clearPreviewForVisual);
+          visual.core.addEventListener("pointerover", () => showPreviewForVisual(visual));
+          visual.core.addEventListener("pointerout", clearPreviewForVisual);
+          visual.core.addEventListener("touchstart", (event) => {
+            showPreviewForVisual(visual);
+            handleNodeSelection(event, visual);
+          }, { passive: false });
+          visual.core.addEventListener("pointerdown", (event) => handleNodeSelection(event, visual));
+          visual.hitTarget.addEventListener("mouseover", () => showPreviewForVisual(visual));
+          visual.hitTarget.addEventListener("mouseout", clearPreviewForVisual);
+          visual.hitTarget.addEventListener("pointerover", () => showPreviewForVisual(visual));
+          visual.hitTarget.addEventListener("pointerout", clearPreviewForVisual);
+          visual.hitTarget.addEventListener("touchstart", (event) => {
+            showPreviewForVisual(visual);
+            handleNodeSelection(event, visual);
+          }, { passive: false });
+          visual.hitTarget.addEventListener("pointerdown", (event) => handleNodeSelection(event, visual));
         });
+      }
 
-        addNeighbor(a.key, b.key);
-        addNeighbor(b.key, a.key);
-      });
+      function bindTriangleInteractions() {
+        triangleVisuals.forEach((triangleVisual) => {
+          triangleVisual.polygon.addEventListener("pointerdown", (event) => {
+            if (currentInteractionMode() !== "triad" && !event.shiftKey) {
+              interactionNote.textContent = "Switch to Triad mode (or Shift-click) to add a triangle to the triad staff.";
+              return;
+            }
 
-      const triangles = [];
-      const triangleIds = new Set();
+            event.stopPropagation();
 
-      nodes.forEach((node) => {
-        const neighbors = adjacency.get(node.key) || [];
-        for (let i = 0; i < neighbors.length; i += 1) {
-          for (let j = i + 1; j < neighbors.length; j += 1) {
-            const left = neighbors[i];
-            const right = neighbors[j];
-            const leftNeighbors = adjacency.get(left) || [];
-            if (!leftNeighbors.includes(right)) {
+            const id = triangleVisual.id;
+            const alreadySelected = selectedTriangleIds.includes(id);
+            if (alreadySelected) {
+              selectedTriangleIds = selectedTriangleIds.filter((triangleId) => triangleId !== id);
+            } else {
+              selectedTriangleIds.push(id);
+            }
+
+            updateTriadView();
+          });
+        });
+      }
+
+      function scheduleGraphRender() {
+        if (graphRenderFrame !== null) {
+          window.cancelAnimationFrame(graphRenderFrame);
+        }
+        graphRenderFrame = window.requestAnimationFrame(() => {
+          graphRenderFrame = null;
+          renderGraph();
+        });
+      }
+
+      function renderGraph() {
+        try {
+          if (typeof window.__tonnetzRenderGraph === "function") {
+            window.__tonnetzRenderGraph();
+            return;
+          }
+
+          const defs = svg.querySelector("defs");
+          svg.replaceChildren(defs);
+
+          const previousMode = currentInteractionMode();
+
+          triangleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        triadTextGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        edgeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        rangeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        textGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        hitGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        nodeVisuals = [];
+        triangleVisuals = [];
+        edgeVisuals = [];
+        adjacency = new Map();
+        trianglesById = new Map();
+        visualByKey = new Map();
+        nodes = new Map();
+
+        const activeSelectedInstruments = activeInstruments();
+        const gridMinMidi = Math.min(...activeSelectedInstruments.map((instrument) => instrument.minMidi));
+        const gridMaxMidi = Math.max(...activeSelectedInstruments.map((instrument) => instrument.maxMidi));
+
+        for (let u = -searchExtent; u <= searchExtent; u += 1) {
+          for (let v = -searchExtent; v <= searchExtent; v += 1) {
+            const midi = 60 + 7 * u + 4 * v;
+            if (midi < gridMinMidi || midi > gridMaxMidi) {
               continue;
             }
 
-            const nodeKeys = [node.key, left, right];
-            const sortedId = [...nodeKeys].sort().join("|");
-            if (triangleIds.has(sortedId)) {
+            const pt = uvToPoint(u, v);
+            if (!inBounds(pt.x, pt.y)) {
               continue;
             }
 
-            triangleIds.add(sortedId);
-            triangles.push({ id: sortedId, nodeKeys });
+            const key = `${u},${v}`;
+            const matchingInstruments = activeSelectedInstruments.filter((instrument) => midi >= instrument.minMidi && midi <= instrument.maxMidi);
+            nodes.set(key, {
+              key,
+              u,
+              v,
+              midi,
+              name: midiToName(midi),
+              x: pt.x,
+              y: pt.y,
+              matchingInstruments
+            });
           }
         }
-      });
 
-      triangles.forEach((triangle) => {
-        const triangleNodes = triangle.nodeKeys
-          .map((nodeKey) => nodes.get(nodeKey))
-          .filter(Boolean);
+        edgePairs = [];
+        nodes.forEach((a) => {
+          directions.forEach(([du, dv]) => {
+            const b = nodeAt(a.u + du, a.v + dv);
+            if (!b) {
+              return;
+            }
+            edgePairs.push([a, b]);
+          });
+        });
 
-        const points = triangleNodes.map((node) => `${node.x},${node.y}`).join(" ");
+        edgePairs.forEach(([a, b]) => {
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", a.x);
+          line.setAttribute("y1", a.y);
+          line.setAttribute("x2", b.x);
+          line.setAttribute("y2", b.y);
 
-        const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-        polygon.setAttribute("points", points);
-        polygon.setAttribute("class", "tri-face");
-        triangleGroup.appendChild(polygon);
+          const centerDistance = Math.hypot((a.x + b.x) * 0.5 - CENTER_X, (a.y + b.y) * 0.5 - CENTER_Y);
+          line.setAttribute("class", centerDistance < 260 ? "tri-line-strong" : "tri-line");
+          edgeGroup.appendChild(line);
 
-        const uniqueSortedKeys = [...triangle.nodeKeys]
-          .sort((left, right) => (nodes.get(left).midi - nodes.get(right).midi));
+          edgeVisuals.push({
+            key: pairKey(a.key, b.key),
+            line
+          });
 
-        const centroidX = triangleNodes.reduce((sum, node) => sum + node.x, 0) / triangleNodes.length;
-        const centroidY = triangleNodes.reduce((sum, node) => sum + node.y, 0) / triangleNodes.length;
+          addNeighbor(a.key, b.key);
+          addNeighbor(b.key, a.key);
+        });
 
-        const triadLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        triadLabel.setAttribute("x", centroidX);
-        triadLabel.setAttribute("y", centroidY + 0.3);
-        triadLabel.setAttribute("class", "triad-label");
-        triadLabel.textContent = buildTriadChordLabel(uniqueSortedKeys);
-        triadTextGroup.appendChild(triadLabel);
+        const triangles = [];
+        const triangleIds = new Set();
 
-        const record = {
-          id: triangle.id,
-          nodeKeys: uniqueSortedKeys,
-          polygon,
-          triadLabel
-        };
+        nodes.forEach((node) => {
+          const neighbors = adjacency.get(node.key) || [];
+          for (let i = 0; i < neighbors.length; i += 1) {
+            for (let j = i + 1; j < neighbors.length; j += 1) {
+              const left = neighbors[i];
+              const right = neighbors[j];
+              const leftNeighbors = adjacency.get(left) || [];
+              if (!leftNeighbors.includes(right)) {
+                continue;
+              }
 
-        trianglesById.set(triangle.id, record);
-        triangleVisuals.push(record);
-      });
+              const nodeKeys = [node.key, left, right];
+              const sortedId = [...nodeKeys].sort().join("|");
+              if (triangleIds.has(sortedId)) {
+                continue;
+              }
 
-      nodes.forEach((n) => {
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", n.x);
-        circle.setAttribute("cy", n.y);
-        circle.setAttribute("r", RADIUS);
-        circle.setAttribute("class", "node");
-        circle.setAttribute("filter", "url(#softShadow)");
-        nodeGroup.appendChild(circle);
+              triangleIds.add(sortedId);
+              triangles.push({ id: sortedId, nodeKeys });
+            }
+          }
+        });
 
-        const ringClasses = [];
-        if (n.inBasset) {
-          ringClasses.push("range-ring range-ring-basset");
-        }
-        if (n.inTenor) {
-          ringClasses.push("range-ring range-ring-tenor");
-        }
-        if (n.inAlto) {
-          ringClasses.push("range-ring range-ring-alto");
-        }
-        if (n.inSoprano) {
-          ringClasses.push("range-ring range-ring-soprano");
-        }
+        triangles.forEach((triangle) => {
+          const triangleNodes = triangle.nodeKeys
+            .map((nodeKey) => nodes.get(nodeKey))
+            .filter(Boolean);
 
-        const ringElements = [];
+          const points = triangleNodes.map((node) => `${node.x},${node.y}`).join(" ");
 
-        ringClasses.forEach((ringClass, idx) => {
+          const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          polygon.setAttribute("points", points);
+          polygon.setAttribute("class", "tri-face");
+          triangleGroup.appendChild(polygon);
+
+          const uniqueSortedKeys = [...triangle.nodeKeys]
+            .sort((left, right) => (nodes.get(left).midi - nodes.get(right).midi));
+
+          const centroidX = triangleNodes.reduce((sum, node) => sum + node.x, 0) / triangleNodes.length;
+          const centroidY = triangleNodes.reduce((sum, node) => sum + node.y, 0) / triangleNodes.length;
+
+          const triadLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          triadLabel.setAttribute("x", centroidX);
+          triadLabel.setAttribute("y", centroidY + 0.3);
+          triadLabel.setAttribute("class", "triad-label");
+          triadLabel.textContent = buildTriadChordLabel(uniqueSortedKeys);
+          triadTextGroup.appendChild(triadLabel);
+
+          const record = {
+            id: triangle.id,
+            nodeKeys: uniqueSortedKeys,
+            polygon,
+            triadLabel
+          };
+
+          trianglesById.set(triangle.id, record);
+          triangleVisuals.push(record);
+        });
+
+        nodes.forEach((n) => {
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", n.x);
+          circle.setAttribute("cy", n.y);
+          circle.setAttribute("r", RADIUS);
+          circle.setAttribute("class", "node");
+          circle.setAttribute("filter", "url(#softShadow)");
+          circle.setAttribute("data-note-name", n.name);
+          nodeGroup.appendChild(circle);
+
+          const ringClasses = n.matchingInstruments.map((instrument) => `range-ring ${instrument.colorClass}`);
+          const ringElements = [];
+
+          ringClasses.forEach((ringClass, idx) => {
+            const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            ring.setAttribute("cx", n.x);
+            ring.setAttribute("cy", n.y);
+            ring.setAttribute("r", RADIUS + 3.1 + idx * 2.9);
+            ring.setAttribute("class", ringClass);
+            rangeGroup.appendChild(ring);
+            ringElements.push(ring);
+          });
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", n.x);
+          label.setAttribute("y", n.y + 0.4);
+          label.setAttribute("class", "label");
+          label.setAttribute("data-note-name", n.name);
+          label.textContent = n.name;
+          textGroup.appendChild(label);
+
+          const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          hitTarget.setAttribute("cx", n.x);
+          hitTarget.setAttribute("cy", n.y);
+          hitTarget.setAttribute("r", RADIUS + 16);
+          hitTarget.setAttribute("class", "node-hit-target");
+          hitGroup.appendChild(hitTarget);
+
+          nodeVisuals.push({
+            key: n.key,
+            pitchClass: ((n.midi % 12) + 12) % 12,
+            displayName: n.name,
+            noteName: n.name,
+            core: circle,
+            label,
+            rings: ringElements,
+            hitTarget
+          });
+        });
+
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        title.setAttribute("x", 52);
+        title.setAttribute("y", 58);
+        title.setAttribute("class", "title");
+        title.textContent = "Tonnetz - Orchestral Range Field";
+
+        const subtitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        subtitle.setAttribute("x", 52);
+        subtitle.setAttribute("y", 86);
+        subtitle.setAttribute("class", "subtitle");
+        const instrumentSummary = activeSelectedInstruments.map((instrument) => instrument.label).join(", ");
+        subtitle.textContent = `Centered on Middle C (C4) with ${instrumentSummary || "selected instruments"} up to accomplished amateur range`;
+
+        interactionNote = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        interactionNote.setAttribute("x", 52);
+        interactionNote.setAttribute("y", 112);
+        interactionNote.setAttribute("class", "interaction-note");
+        interactionNote.textContent = "Route mode: tap notes to build a route. Switch to Triad mode to select triads. Tap empty space or Clear to reset.";
+
+        const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const legendItems = activeSelectedInstruments.length > 0 ? activeSelectedInstruments : instrumentDefinitions.slice(0, 4);
+
+        legendItems.forEach((instrument, index) => {
           const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          ring.setAttribute("cx", n.x);
-          ring.setAttribute("cy", n.y);
-          ring.setAttribute("r", RADIUS + 3.1 + idx * 2.9);
-          ring.setAttribute("class", ringClass);
-          rangeGroup.appendChild(ring);
-          ringElements.push(ring);
+          const row = Math.floor(index / 4);
+          const col = index % 4;
+          ring.setAttribute("cx", width - 560 + col * 132);
+          ring.setAttribute("cy", 58 + row * 24);
+          ring.setAttribute("r", 10);
+          ring.setAttribute("class", `range-ring ${instrument.colorClass}`);
+          legend.appendChild(ring);
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", width - 543 + col * 132);
+          label.setAttribute("y", 58 + row * 24);
+          label.setAttribute("class", "legend-label");
+          label.textContent = instrument.label;
+          legend.appendChild(label);
         });
 
-        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        label.setAttribute("x", n.x);
-        label.setAttribute("y", n.y + 0.4);
-        label.setAttribute("class", "label");
-        label.textContent = n.name;
-        textGroup.appendChild(label);
+        const footer = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        footer.setAttribute("x", 52);
+        footer.setAttribute("y", height - 22);
+        footer.setAttribute("class", "footer");
+        footer.textContent = "Overlap notes show all selected instrument ring colors. Route and triad staves are rendered separately.";
 
-        const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        hitTarget.setAttribute("cx", n.x);
-        hitTarget.setAttribute("cy", n.y);
-        hitTarget.setAttribute("r", RADIUS + 12);
-        hitTarget.setAttribute("class", "node-hit-target");
-        hitGroup.appendChild(hitTarget);
+        selectedNodeKeys = [];
+        activePathKeys = [];
+        selectedTriangleIds = [];
+        routePlaybackEvents = [];
+        triadPlaybackEvents = [];
+        activeMode = previousMode;
+        highlightedNoteName = null;
+        previewNoteName = null;
 
-        nodeVisuals.push({
-          key: n.key,
-          pitchClass: ((n.midi % 12) + 12) % 12,
-          displayName: n.name,
-          core: circle,
-          label,
-          rings: ringElements,
-          hitTarget
+        svg.appendChild(triangleGroup);
+        svg.appendChild(triadTextGroup);
+        svg.appendChild(edgeGroup);
+        svg.appendChild(nodeGroup);
+        svg.appendChild(rangeGroup);
+        svg.appendChild(textGroup);
+        svg.appendChild(hitGroup);
+        svg.appendChild(title);
+        svg.appendChild(subtitle);
+        svg.appendChild(interactionNote);
+        svg.appendChild(legend);
+        svg.appendChild(footer);
+
+        nodeVisuals.forEach((visual) => {
+          visualByKey.set(visual.key, visual);
         });
-      });
 
-      const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      title.setAttribute("x", 52);
-      title.setAttribute("y", 58);
-      title.setAttribute("class", "title");
-      title.textContent = "Tonnetz - Recorder Range Field";
-
-      const subtitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      subtitle.setAttribute("x", 52);
-      subtitle.setAttribute("y", 86);
-      subtitle.setAttribute("class", "subtitle");
-      subtitle.textContent = "Centered on Middle C (C4) | Basset F3-G5, Tenor C4-D6, Alto F4-G6, Soprano C5-D7";
-
-      const interactionNote = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      interactionNote.setAttribute("x", 52);
-      interactionNote.setAttribute("y", 112);
-      interactionNote.setAttribute("class", "interaction-note");
-      interactionNote.textContent = "Route mode: tap notes to build a route. Switch to Triad mode to select triads. Tap empty space or Clear to reset.";
-
-      const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
-      const bassetLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      bassetLegendRing.setAttribute("cx", width - 542);
-      bassetLegendRing.setAttribute("cy", 58);
-      bassetLegendRing.setAttribute("r", 10);
-      bassetLegendRing.setAttribute("class", "range-ring range-ring-basset");
-
-      const bassetLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      bassetLegendLabel.setAttribute("x", width - 525);
-      bassetLegendLabel.setAttribute("y", 58);
-      bassetLegendLabel.setAttribute("class", "legend-label");
-      bassetLegendLabel.textContent = "Basset range";
-
-      const tenorLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      tenorLegendRing.setAttribute("cx", width - 418);
-      tenorLegendRing.setAttribute("cy", 58);
-      tenorLegendRing.setAttribute("r", 10);
-      tenorLegendRing.setAttribute("class", "range-ring range-ring-tenor");
-
-      const tenorLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      tenorLegendLabel.setAttribute("x", width - 401);
-      tenorLegendLabel.setAttribute("y", 58);
-      tenorLegendLabel.setAttribute("class", "legend-label");
-      tenorLegendLabel.textContent = "Tenor range";
-
-      const altoLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      altoLegendRing.setAttribute("cx", width - 310);
-      altoLegendRing.setAttribute("cy", 58);
-      altoLegendRing.setAttribute("r", 10);
-      altoLegendRing.setAttribute("class", "range-ring range-ring-alto");
-
-      const altoLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      altoLegendLabel.setAttribute("x", width - 293);
-      altoLegendLabel.setAttribute("y", 58);
-      altoLegendLabel.setAttribute("class", "legend-label");
-      altoLegendLabel.textContent = "Alto range";
-
-      const sopranoLegendRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      sopranoLegendRing.setAttribute("cx", width - 186);
-      sopranoLegendRing.setAttribute("cy", 58);
-      sopranoLegendRing.setAttribute("r", 10);
-      sopranoLegendRing.setAttribute("class", "range-ring range-ring-soprano");
-
-      const sopranoLegendLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      sopranoLegendLabel.setAttribute("x", width - 169);
-      sopranoLegendLabel.setAttribute("y", 58);
-      sopranoLegendLabel.setAttribute("class", "legend-label");
-      sopranoLegendLabel.textContent = "Soprano range";
-
-      legend.appendChild(bassetLegendRing);
-      legend.appendChild(bassetLegendLabel);
-      legend.appendChild(tenorLegendRing);
-      legend.appendChild(tenorLegendLabel);
-      legend.appendChild(altoLegendRing);
-      legend.appendChild(altoLegendLabel);
-      legend.appendChild(sopranoLegendRing);
-      legend.appendChild(sopranoLegendLabel);
-
-      const footer = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      footer.setAttribute("x", 52);
-      footer.setAttribute("y", height - 22);
-      footer.setAttribute("class", "footer");
-      footer.textContent = "Static composition grid: overlap notes show all applicable ring colors. Route and triad staves are rendered separately.";
-
-      let selectedNodeKeys = [];
-      let activePathKeys = [];
-      let selectedTriangleIds = [];
-      let routePlaybackEvents = [];
-      let triadPlaybackEvents = [];
-      let activeMode = "route";
+        maxRadius = Math.max(...Array.from(nodes.values(), (node) => Math.hypot(node.x - CENTER_X, node.y - CENTER_Y)));
+        bindNodeInteractions();
+        bindTriangleInteractions();
+        updatePathView();
+        updateTriadView();
+        } catch (error) {
+          console.error("renderGraph failed", error);
+          if (svg) {
+            svg.innerHTML = "";
+          }
+        }
+      }
 
       let audioContext = null;
       let masterGain = null;
       let activeOscillators = [];
       let playbackToken = 0;
 
-      // iOS Safari requires Web Audio to be unlocked on the first user gesture.
-      // Pre-create and resume the context on the first touch so playback is
-      // ready without a further async round-trip.
+      // iOS Safari and other browsers require Web Audio to be unlocked on the
+      // first user gesture before scheduling notes.
       document.addEventListener("pointerdown", function unlockAudio() {
-        ensureAudioEngine();
-        if (audioContext && audioContext.state === "suspended") {
-          audioContext.resume().catch(() => {});
-        }
+        void resumeAudioEngine();
       }, { once: true });
 
       function ensureAudioEngine() {
@@ -1175,7 +1389,7 @@
 
           audioContext = new Ctx();
           masterGain = audioContext.createGain();
-          masterGain.gain.value = 0.2;
+          masterGain.gain.value = 0.35;
           masterGain.connect(audioContext.destination);
         }
         return true;
@@ -1186,7 +1400,12 @@
           return false;
         }
         if (audioContext.state === "suspended") {
-          await audioContext.resume();
+          try {
+            await audioContext.resume();
+          } catch (error) {
+            interactionNote.textContent = "Audio playback could not start. Try tapping the page again or allowing audio in the browser.";
+            return false;
+          }
         }
         return true;
       }
@@ -1199,9 +1418,13 @@
         playbackToken += 1;
         activeOscillators.forEach(({ osc, gain }) => {
           try {
-            gain.gain.cancelScheduledValues(0);
-            gain.gain.setValueAtTime(0.0001, audioContext ? audioContext.currentTime : 0);
-            osc.stop();
+            if (gain && gain.gain) {
+              gain.gain.cancelScheduledValues(0);
+              gain.gain.setValueAtTime(0.0001, audioContext ? audioContext.currentTime : 0);
+            }
+            if (osc && osc.stop) {
+              osc.stop();
+            }
           } catch (error) {
             // Ignore stop errors for already-ended oscillators.
           }
@@ -1215,7 +1438,7 @@
         }
 
         const voiceGain = audioContext.createGain();
-        const voiceLevel = Math.min(0.24, 0.24 / Math.sqrt(midis.length));
+        const voiceLevel = Math.min(0.38, 0.38 / Math.sqrt(midis.length));
         voiceGain.gain.setValueAtTime(0.0001, startTime);
         voiceGain.gain.linearRampToValueAtTime(voiceLevel, startTime + 0.03);
         voiceGain.gain.setValueAtTime(voiceLevel, startTime + Math.max(0.06, durationSeconds - 0.08));
@@ -1223,13 +1446,17 @@
         voiceGain.connect(masterGain);
 
         midis.forEach((midi) => {
-          const osc = audioContext.createOscillator();
-          osc.type = "triangle";
-          osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
-          osc.connect(voiceGain);
-          osc.start(startTime);
-          osc.stop(startTime + durationSeconds + 0.02);
-          activeOscillators.push({ osc, gain: voiceGain });
+          try {
+            const osc = audioContext.createOscillator();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(midiToFrequency(midi), startTime);
+            osc.connect(voiceGain);
+            osc.start(startTime);
+            osc.stop(startTime + durationSeconds + 0.02);
+            activeOscillators.push({ osc, gain: voiceGain });
+          } catch (error) {
+            interactionNote.textContent = "Audio playback encountered a browser error. Please refresh and try again.";
+          }
         });
       }
 
@@ -1242,7 +1469,7 @@
         const eventsToPlay = source === "triad" ? triadPlaybackEvents : routePlaybackEvents;
         if (eventsToPlay.length === 0) {
           interactionNote.textContent = source === "triad"
-            ? "No triads selected for playback. Shift-click triangles first."
+            ? "No triads selected for playback. Switch to Triad mode and tap triangles first."
             : "No route notes selected for playback. Add waypoints first.";
           return;
         }
@@ -1274,13 +1501,6 @@
             : "Route playback finished. Click Play to hear the route again.";
         }, totalMs + 80);
       }
-
-      const visualByKey = new Map();
-      nodeVisuals.forEach((visual) => {
-        visualByKey.set(visual.key, visual);
-      });
-
-      const maxRadius = Math.max(...Array.from(nodes.values(), (n) => Math.hypot(n.x - CENTER_X, n.y - CENTER_Y)));
 
       function reconstructPath(previous, startKey, endKey) {
         if (!previous.has(endKey) && startKey !== endKey) {
@@ -1422,6 +1642,8 @@
       function clearPathState() {
         selectedNodeKeys = [];
         activePathKeys = [];
+        highlightedNoteName = null;
+        previewNoteName = null;
       }
 
       function clearTriadState() {
@@ -1456,7 +1678,7 @@
       }
 
       function updateInteractionMessage() {
-        if (activeMode === "route") {
+        if (currentInteractionMode() === "route") {
           interactionNote.textContent = `Route mode — ${routeStatusMessage()} Switch to Triad mode to select triads.`;
         } else {
           interactionNote.textContent = `Triad mode — ${triadStatusMessage()} Switch to Route mode to build a route.`;
@@ -1466,6 +1688,7 @@
       function setMode(mode) {
         activeMode = mode;
         hitGroup.style.pointerEvents = mode === "triad" ? "none" : "";
+        svg.classList.toggle("mode-triad", mode === "triad");
         updateInteractionMessage();
       }
 
@@ -1483,27 +1706,34 @@
           edgeVisual.line.classList.toggle("path-edge-active", onPath);
         });
 
+        const matchedNoteName = previewNoteName ?? highlightedNoteName;
+
         nodeVisuals.forEach((visual) => {
           const onPath = pathNodeSet.has(visual.key);
           const isStart = selectedNodeKeys.length > 0 && visual.key === selectedNodeKeys[0];
           const isEnd = selectedNodeKeys.length > 1 && visual.key === selectedNodeKeys[selectedNodeKeys.length - 1];
           const isWaypoint = selectedNodeKeys.slice(1, -1).includes(visual.key);
+          const visualNoteName = (visual.label.textContent || "").trim();
+          const isSameNote = matchedNoteName !== null && visualNoteName === matchedNoteName;
 
           visual.core.classList.toggle("node-muted", hasPath && !onPath);
           visual.core.classList.toggle("node-path", onPath);
           visual.core.classList.toggle("node-start", isStart);
           visual.core.classList.toggle("node-end", isEnd);
           visual.core.classList.toggle("node-waypoint", isWaypoint);
+          visual.core.classList.toggle("node-match", isSameNote);
 
           visual.label.classList.toggle("label-muted", hasPath && !onPath);
           visual.label.classList.toggle("label-path", onPath);
           visual.label.classList.toggle("label-start", isStart);
           visual.label.classList.toggle("label-end", isEnd);
           visual.label.classList.toggle("label-waypoint", isWaypoint);
+          visual.label.classList.toggle("label-match", isSameNote);
 
           visual.rings.forEach((ring) => {
             ring.classList.toggle("range-ring-muted", hasPath && !onPath);
             ring.classList.toggle("range-ring-path", onPath);
+            ring.classList.toggle("range-ring-match", isSameNote);
           });
         });
 
@@ -1546,55 +1776,62 @@
         updateInteractionMessage();
       }
 
-      triangleVisuals.forEach((triangleVisual) => {
-        triangleVisual.polygon.addEventListener("pointerdown", (event) => {
-          if (activeMode !== "triad" && !event.shiftKey) {
-            interactionNote.textContent = "Switch to Triad mode (or Shift-click) to add a triangle to the triad staff.";
-            return;
-          }
-
+      function handleNodeSelection(event, visual) {
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+        if (activeMode === "route") {
           event.stopPropagation();
+        }
+        if (activeMode !== "route" || event.shiftKey) {
+          return;
+        }
 
-          const id = triangleVisual.id;
-          const alreadySelected = selectedTriangleIds.includes(id);
-          if (alreadySelected) {
-            selectedTriangleIds = selectedTriangleIds.filter((triangleId) => triangleId !== id);
-          } else {
-            selectedTriangleIds.push(id);
-          }
+        const clickedKey = visual.key;
+        const shouldRemove = selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1];
 
-          updateTriadView();
-        });
-      });
+        if (shouldRemove) {
+          selectedNodeKeys.pop();
+        } else {
+          selectedNodeKeys.push(clickedKey);
+        }
 
-      nodeVisuals.forEach((visual) => {
-        visual.hitTarget.addEventListener("pointerdown", (event) => {
-          if (activeMode === "route") {
-            event.stopPropagation();
-          }
-          if (activeMode !== "route" || event.shiftKey) {
-            return;
-          }
+        const noteName = (visual.label.textContent || "").trim() || nodes.get(clickedKey)?.name || visual.noteName || null;
+        previewNoteName = noteName;
+        highlightedNoteName = noteName;
+        activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
+        updatePathView();
+        previewNoteName = null;
+      }
 
-          const clickedKey = visual.key;
+      function showPreviewForVisual(visual) {
+        if (selectedNodeKeys.length > 0) {
+          return;
+        }
+        const noteName = (visual.label.textContent || "").trim() || visual.noteName || null;
+        previewNoteName = noteName;
+        updatePathView();
+      }
 
-          if (selectedNodeKeys.length > 0 && clickedKey === selectedNodeKeys[selectedNodeKeys.length - 1]) {
-            selectedNodeKeys.pop();
-          } else {
-            selectedNodeKeys.push(clickedKey);
-          }
+      function clearPreviewForVisual() {
+        if (selectedNodeKeys.length > 0) {
+          return;
+        }
+        previewNoteName = null;
+        updatePathView();
+      }
 
-          activePathKeys = buildPathFromWaypoints(selectedNodeKeys);
-
-          updatePathView();
-        });
-      });
+      svg.addEventListener("touchend", clearPreviewForVisual, { passive: false });
+      svg.addEventListener("touchcancel", clearPreviewForVisual, { passive: false });
 
       svg.addEventListener("pointerdown", (event) => {
         if (event.target.closest(".node-hit-target")) {
           return;
         }
         if (event.target.closest(".tri-face")) {
+          return;
+        }
+        if (event.target.closest(".node")) {
           return;
         }
         clearPathState();
@@ -1610,6 +1847,23 @@
 
       interactionModeSelect.addEventListener("change", () => {
         setMode(interactionModeSelect.value);
+      });
+
+      const refreshGraphFromSelection = () => {
+        persistInstrumentSelection();
+        clearPathState();
+        clearTriadState();
+        scheduleGraphRender();
+      };
+
+      instrumentSelection.addEventListener("change", refreshGraphFromSelection);
+      instrumentSelection.addEventListener("input", refreshGraphFromSelection);
+      instrumentSelection.addEventListener("click", refreshGraphFromSelection);
+      instrumentSelection.addEventListener("pointerup", refreshGraphFromSelection);
+      instrumentSelection.addEventListener("keyup", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          refreshGraphFromSelection();
+        }
       });
 
       clearPathButton.addEventListener("click", () => {
@@ -1628,26 +1882,284 @@
         interactionNote.textContent = "Playback stopped.";
       });
 
-      svg.appendChild(triangleGroup);
-      svg.appendChild(triadTextGroup);
-      svg.appendChild(edgeGroup);
-      svg.appendChild(nodeGroup);
-      svg.appendChild(rangeGroup);
-      svg.appendChild(textGroup);
-      svg.appendChild(hitGroup);
-      svg.appendChild(title);
-      svg.appendChild(subtitle);
-      svg.appendChild(interactionNote);
-      svg.appendChild(legend);
-      svg.appendChild(footer);
+      window.__tonnetzRenderGraph = function () {
+        const defs = svg.querySelector("defs");
+        svg.replaceChildren(defs);
 
-      updatePathView();
-      updateTriadView();
+        triangleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        triadTextGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        edgeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        rangeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        textGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        hitGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        nodeVisuals = [];
+        triangleVisuals = [];
+        edgeVisuals = [];
+        adjacency = new Map();
+        trianglesById = new Map();
+        visualByKey = new Map();
+        nodes = new Map();
+
+        const activeSelectedInstruments = activeInstruments();
+        if (activeSelectedInstruments.length === 0) {
+          selectedNodeKeys = [];
+          activePathKeys = [];
+          selectedTriangleIds = [];
+          routePlaybackEvents = [];
+          triadPlaybackEvents = [];
+          highlightedNoteName = null;
+          previewNoteName = null;
+        }
+
+        const gridMinMidi = Math.min(...activeSelectedInstruments.map((instrument) => instrument.minMidi));
+        const gridMaxMidi = Math.max(...activeSelectedInstruments.map((instrument) => instrument.maxMidi));
+
+        for (let u = -searchExtent; u <= searchExtent; u += 1) {
+          for (let v = -searchExtent; v <= searchExtent; v += 1) {
+            const midi = 60 + 7 * u + 4 * v;
+            if (midi < gridMinMidi || midi > gridMaxMidi) {
+              continue;
+            }
+
+            const pt = uvToPoint(u, v);
+            if (!inBounds(pt.x, pt.y)) {
+              continue;
+            }
+
+            const key = `${u},${v}`;
+            const matchingInstruments = activeSelectedInstruments.filter((instrument) => midi >= instrument.minMidi && midi <= instrument.maxMidi);
+            nodes.set(key, {
+              key,
+              u,
+              v,
+              midi,
+              name: midiToName(midi),
+              x: pt.x,
+              y: pt.y,
+              matchingInstruments
+            });
+          }
+        }
+
+        edgePairs = [];
+        nodes.forEach((a) => {
+          directions.forEach(([du, dv]) => {
+            const b = nodeAt(a.u + du, a.v + dv);
+            if (!b) {
+              return;
+            }
+            edgePairs.push([a, b]);
+          });
+        });
+
+        edgePairs.forEach(([a, b]) => {
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", a.x);
+          line.setAttribute("y1", a.y);
+          line.setAttribute("x2", b.x);
+          line.setAttribute("y2", b.y);
+          const centerDistance = Math.hypot((a.x + b.x) * 0.5 - CENTER_X, (a.y + b.y) * 0.5 - CENTER_Y);
+          line.setAttribute("class", centerDistance < 260 ? "tri-line-strong" : "tri-line");
+          edgeGroup.appendChild(line);
+          edgeVisuals.push({ key: pairKey(a.key, b.key), line });
+          addNeighbor(a.key, b.key);
+          addNeighbor(b.key, a.key);
+        });
+
+        const triangles = [];
+        const triangleIds = new Set();
+
+        nodes.forEach((node) => {
+          const neighbors = adjacency.get(node.key) || [];
+          for (let i = 0; i < neighbors.length; i += 1) {
+            for (let j = i + 1; j < neighbors.length; j += 1) {
+              const left = neighbors[i];
+              const right = neighbors[j];
+              const leftNeighbors = adjacency.get(left) || [];
+              if (!leftNeighbors.includes(right)) {
+                continue;
+              }
+
+              const nodeKeys = [node.key, left, right];
+              const sortedId = [...nodeKeys].sort().join("|");
+              if (triangleIds.has(sortedId)) {
+                continue;
+              }
+
+              triangleIds.add(sortedId);
+              triangles.push({ id: sortedId, nodeKeys });
+            }
+          }
+        });
+
+        triangles.forEach((triangle) => {
+          const triangleNodes = triangle.nodeKeys
+            .map((nodeKey) => nodes.get(nodeKey))
+            .filter(Boolean);
+
+          const points = triangleNodes.map((node) => `${node.x},${node.y}`).join(" ");
+
+          const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          polygon.setAttribute("points", points);
+          polygon.setAttribute("class", "tri-face");
+          triangleGroup.appendChild(polygon);
+
+          const uniqueSortedKeys = [...triangle.nodeKeys]
+            .sort((left, right) => (nodes.get(left).midi - nodes.get(right).midi));
+
+          const centroidX = triangleNodes.reduce((sum, node) => sum + node.x, 0) / triangleNodes.length;
+          const centroidY = triangleNodes.reduce((sum, node) => sum + node.y, 0) / triangleNodes.length;
+
+          const triadLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          triadLabel.setAttribute("x", centroidX);
+          triadLabel.setAttribute("y", centroidY + 0.3);
+          triadLabel.setAttribute("class", "triad-label");
+          triadLabel.textContent = buildTriadChordLabel(uniqueSortedKeys);
+          triadTextGroup.appendChild(triadLabel);
+
+          const record = {
+            id: triangle.id,
+            nodeKeys: uniqueSortedKeys,
+            polygon,
+            triadLabel
+          };
+
+          trianglesById.set(triangle.id, record);
+          triangleVisuals.push(record);
+        });
+
+        nodes.forEach((n) => {
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", n.x);
+          circle.setAttribute("cy", n.y);
+          circle.setAttribute("r", RADIUS);
+          circle.setAttribute("class", "node");
+          circle.setAttribute("filter", "url(#softShadow)");
+          circle.setAttribute("data-note-name", n.name);
+          nodeGroup.appendChild(circle);
+
+          const ringElements = [];
+          n.matchingInstruments.forEach((instrument, idx) => {
+            const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            ring.setAttribute("cx", n.x);
+            ring.setAttribute("cy", n.y);
+            ring.setAttribute("r", RADIUS + 3.1 + idx * 2.9);
+            ring.setAttribute("class", `range-ring ${instrument.colorClass}`);
+            rangeGroup.appendChild(ring);
+            ringElements.push(ring);
+          });
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", n.x);
+          label.setAttribute("y", n.y + 0.4);
+          label.setAttribute("class", "label");
+          label.setAttribute("data-note-name", n.name);
+          label.textContent = n.name;
+          textGroup.appendChild(label);
+
+          const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          hitTarget.setAttribute("cx", n.x);
+          hitTarget.setAttribute("cy", n.y);
+          hitTarget.setAttribute("r", RADIUS + 16);
+          hitTarget.setAttribute("class", "node-hit-target");
+          hitGroup.appendChild(hitTarget);
+
+          nodeVisuals.push({
+            key: n.key,
+            pitchClass: ((n.midi % 12) + 12) % 12,
+            displayName: n.name,
+            noteName: n.name,
+            core: circle,
+            label,
+            rings: ringElements,
+            hitTarget
+          });
+        });
+
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        title.setAttribute("x", 52);
+        title.setAttribute("y", 58);
+        title.setAttribute("class", "title");
+        title.textContent = "Tonnetz - Orchestral Range Field";
+
+        const subtitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        subtitle.setAttribute("x", 52);
+        subtitle.setAttribute("y", 86);
+        subtitle.setAttribute("class", "subtitle");
+        const instrumentSummary = activeSelectedInstruments.map((instrument) => instrument.label).join(", ");
+        subtitle.textContent = `Centered on Middle C (C4) with ${instrumentSummary || "selected instruments"} up to accomplished amateur range`;
+
+        interactionNote = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        interactionNote.setAttribute("x", 52);
+        interactionNote.setAttribute("y", 112);
+        interactionNote.setAttribute("class", "interaction-note");
+        interactionNote.textContent = "Route mode: tap notes to build a route. Switch to Triad mode to select triads. Tap empty space or Clear to reset.";
+
+        const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const legendItems = activeSelectedInstruments.length > 0 ? activeSelectedInstruments : instrumentDefinitions.slice(0, 4);
+        legendItems.forEach((instrument, index) => {
+          const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          const row = Math.floor(index / 4);
+          const col = index % 4;
+          ring.setAttribute("cx", width - 560 + col * 132);
+          ring.setAttribute("cy", 58 + row * 24);
+          ring.setAttribute("r", 10);
+          ring.setAttribute("class", `range-ring ${instrument.colorClass}`);
+          legend.appendChild(ring);
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", width - 543 + col * 132);
+          label.setAttribute("y", 58 + row * 24);
+          label.setAttribute("class", "legend-label");
+          label.textContent = instrument.label;
+          legend.appendChild(label);
+        });
+
+        const footer = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        footer.setAttribute("x", 52);
+        footer.setAttribute("y", height - 22);
+        footer.setAttribute("class", "footer");
+        footer.textContent = "Overlap notes show all selected instrument ring colors. Route and triad staves are rendered separately.";
+
+        svg.appendChild(triangleGroup);
+        svg.appendChild(triadTextGroup);
+        svg.appendChild(edgeGroup);
+        svg.appendChild(nodeGroup);
+        svg.appendChild(rangeGroup);
+        svg.appendChild(textGroup);
+        svg.appendChild(hitGroup);
+        svg.appendChild(title);
+        svg.appendChild(subtitle);
+        svg.appendChild(interactionNote);
+        svg.appendChild(legend);
+        svg.appendChild(footer);
+
+        nodeVisuals.forEach((visual) => {
+          visualByKey.set(visual.key, visual);
+        });
+
+        maxRadius = Math.max(...Array.from(nodes.values(), (node) => Math.hypot(node.x - CENTER_X, node.y - CENTER_Y)));
+        bindNodeInteractions();
+        bindTriangleInteractions();
+        updatePathView();
+        updateTriadView();
+      };
+
+      renderGraph();
     })();
   </script>
   <script>
     if ("serviceWorker" in navigator) {
+      const isLocalPreview = ["127.0.0.1", "localhost"].includes(window.location.hostname);
       window.addEventListener("load", () => {
+        if (isLocalPreview) {
+          navigator.serviceWorker.getRegistrations().then((registrations) => Promise.all(registrations.map((registration) => registration.unregister()))).catch(() => {
+            // Ignore unregister failures during local preview.
+          });
+          return;
+        }
+
         navigator.serviceWorker.register("sw.js").catch(() => {
           // Service worker registration is best-effort; the app still works without it.
         });

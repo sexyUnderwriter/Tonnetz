@@ -1,4 +1,4 @@
-const CACHE_NAME = "tonnetz-v1";
+const CACHE_NAME = "tonnetz-v3";
 
 // Resources to pre-cache on install (app shell).
 const PRECACHE_URLS = [
@@ -41,7 +41,23 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Cache-first for same-origin app shell resources.
+  // Network-first for HTML documents so updates are picked up immediately.
+  if (url.origin === self.location.origin && (request.mode === "navigate" || request.destination === "document")) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Cache-first for other same-origin app shell resources.
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(request).then((cached) => {
