@@ -442,7 +442,7 @@
     }
 
     .label {
-      font-size: clamp(12px, 1.2vw, 16px);
+      font-size: 22px;
       fill: var(--ink);
       text-anchor: middle;
       dominant-baseline: central;
@@ -499,20 +499,20 @@
     }
 
     .footer {
-      font-size: clamp(11px, 1vw, 13px);
+      font-size: 15px;
       fill: #68747f;
       letter-spacing: 0.035em;
     }
 
     .legend-label {
-      font-size: clamp(12px, 1.05vw, 14px);
+      font-size: 17px;
       fill: #5e6973;
       letter-spacing: 0.025em;
       dominant-baseline: central;
     }
 
     .interaction-note {
-      font-size: clamp(12px, 1.05vw, 14px);
+      font-size: 17px;
       fill: #56626d;
       letter-spacing: 0.03em;
     }
@@ -545,7 +545,7 @@
     }
 
     .triad-label {
-      font-size: clamp(9px, 0.9vw, 12px);
+      font-size: 19px;
       fill: rgba(31, 40, 51, 0.68);
       text-anchor: middle;
       dominant-baseline: middle;
@@ -588,7 +588,7 @@
       <h1>Tonnetz - Orchestral Range Field</h1>
     </div>
     <div class="tonnetz-stage">
-      <svg id="tonnetz" viewBox="0 0 2200 1400" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
+      <svg id="tonnetz" viewBox="0 0 1100 840" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
         <defs>
           <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#101923" flood-opacity="0.2" />
@@ -691,11 +691,11 @@
       const romanRootSelect = document.getElementById("romanRootSelect");
       const scorePreview = document.getElementById("scorePreview");
       const triadPreview = document.getElementById("triadPreview");
-      const width = 2200;
-      const height = 1400;
-      const HEADER_BAND = 40;
+      const width = 1100;
+      const height = 840;
+      const HEADER_BAND = 100;
       const SIDE_MARGIN = 12;
-      const BOTTOM_MARGIN = 22;
+      const BOTTOM_MARGIN = 25;
 
       const instrumentDefinitions = [
         { key: "violin", label: "Violin", minMidi: 55, maxMidi: 88, colorClass: "range-ring-violin", accentVar: "--violin-accent" },
@@ -759,9 +759,9 @@
 
       const CENTER_X = width / 2;
       const CENTER_Y = (HEADER_BAND + (height - BOTTOM_MARGIN)) / 2;
-      const SPACING = 118;
+      const SPACING = 95;
       const SQRT3 = Math.sqrt(3);
-      const RADIUS = 28;
+      const RADIUS = 24;
 
       const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
       const romanNumeralsByInterval = ["I", "bII", "II", "bIII", "III", "IV", "bV", "V", "bVI", "VI", "bVII", "VII"];
@@ -1327,7 +1327,7 @@
           line.setAttribute("y2", b.y);
 
           const centerDistance = Math.hypot((a.x + b.x) * 0.5 - CENTER_X, (a.y + b.y) * 0.5 - CENTER_Y);
-          line.setAttribute("class", centerDistance < 260 ? "tri-line-strong" : "tri-line");
+          line.setAttribute("class", centerDistance < 200 ? "tri-line-strong" : "tri-line");
           edgeGroup.appendChild(line);
 
           edgeVisuals.push({
@@ -2116,7 +2116,7 @@
           line.setAttribute("x2", b.x);
           line.setAttribute("y2", b.y);
           const centerDistance = Math.hypot((a.x + b.x) * 0.5 - CENTER_X, (a.y + b.y) * 0.5 - CENTER_Y);
-          line.setAttribute("class", centerDistance < 260 ? "tri-line-strong" : "tri-line");
+          line.setAttribute("class", centerDistance < 200 ? "tri-line-strong" : "tri-line");
           edgeGroup.appendChild(line);
           edgeVisuals.push({ key: pairKey(a.key, b.key), line });
           addNeighbor(a.key, b.key);
