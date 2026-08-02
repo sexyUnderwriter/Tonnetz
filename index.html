@@ -653,6 +653,8 @@
               "        </pitch>",
               "        <duration>4</duration>",
               "        <type>whole</type>",
+              "        <voice>1</voice>",
+              "        <staff>1</staff>",
               "      </note>",
               "    </measure>"
             );
@@ -741,6 +743,8 @@
                 "        </pitch>",
                 "        <duration>4</duration>",
                 "        <type>whole</type>",
+                "        <voice>1</voice>",
+                "        <staff>1</staff>",
                 "      </note>"
               );
             });
@@ -1242,7 +1246,7 @@
         const eventsToPlay = source === "triad" ? triadPlaybackEvents : routePlaybackEvents;
         if (eventsToPlay.length === 0) {
           interactionNote.textContent = source === "triad"
-            ? "No triads selected for playback. Shift-click triangles first."
+            ? "No triads selected for playback. Switch to Triad mode and tap triangles first."
             : "No route notes selected for playback. Add waypoints first.";
           return;
         }
