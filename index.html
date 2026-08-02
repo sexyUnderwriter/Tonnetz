@@ -95,9 +95,119 @@
     .tonnetz-stage {
       grid-area: tonnetz;
       position: relative;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 8px;
       width: 100%;
       height: clamp(860px, calc(100vh - 180px), 1500px);
       min-height: 860px;
+    }
+
+    .tonnetz-viewbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 40px;
+      padding: 6px 8px;
+      background: rgba(244, 241, 232, 0.95);
+      border: 1px solid rgba(31, 40, 51, 0.22);
+      border-radius: 8px;
+    }
+
+    .instrument-legend {
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 14px;
+      min-width: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: #34414d;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 auto;
+      border: 2px solid var(--legend-color);
+      border-radius: 50%;
+      background: #fffdf7;
+    }
+
+    .view-controls {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .view-controls button {
+      min-width: 38px;
+      min-height: 32px;
+      padding: 4px 9px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: #1f2833;
+      background: #fffdf7;
+      border: 1px solid rgba(31, 40, 51, 0.32);
+      border-radius: 6px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .view-controls button:hover,
+    .view-controls button:focus-visible,
+    .view-controls button[aria-pressed="true"] {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .tonnetz-canvas {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: var(--paper);
+      border: 1px solid rgba(31, 40, 51, 0.16);
+      border-radius: 4px;
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.8) inset,
+        0 18px 40px rgba(18, 23, 28, 0.12);
+    }
+
+    .tonnetz-help {
+      margin: 0;
+      padding: 0 4px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      line-height: 1.35;
+      color: #586572;
+    }
+
+    .frame.grid-focused {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        "page-title"
+        "controls"
+        "tonnetz";
+    }
+
+    .frame.grid-focused .score-grid {
+      display: none;
+    }
+
+    .frame.grid-focused .tonnetz-stage {
+      height: clamp(900px, calc(100vw / 1.2), 1500px);
     }
 
     .path-controls {
@@ -251,14 +361,12 @@
     }
 
     #tonnetz {
+      --note-font-size: 22px;
+      --triad-font-size: 19px;
+      --text-halo-width: 3px;
       width: 100%;
       height: 100%;
       display: block;
-      background: var(--paper);
-      border: 1px solid rgba(31, 40, 51, 0.16);
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.8) inset,
-        0 18px 40px rgba(18, 23, 28, 0.12);
       /* Prevent browser pan/zoom from intercepting touch events on the SVG */
       touch-action: none;
       /* Suppress the blue tap-flash on iOS */
@@ -349,8 +457,8 @@
 
     .range-ring {
       fill: none;
-      stroke-width: 2.1;
-      opacity: 0.96;
+      stroke-width: 1.35;
+      opacity: 0.58;
       transition: opacity 120ms ease, stroke-width 120ms ease;
     }
 
@@ -360,17 +468,17 @@
 
     .range-ring-match {
       opacity: 1;
-      stroke-width: 2.45;
+      stroke-width: 2.25;
     }
 
     .range-ring-selected {
-      opacity: 1;
-      stroke-width: 2.8;
+      opacity: 0.92;
+      stroke-width: 2.4;
     }
 
     .range-ring-path {
-      opacity: 1;
-      stroke-width: 2.6;
+      opacity: 0.9;
+      stroke-width: 2.3;
     }
 
     .range-ring-tenor {
@@ -442,11 +550,16 @@
     }
 
     .label {
-      font-size: 22px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: var(--note-font-size);
       fill: var(--ink);
+      stroke: rgba(244, 241, 232, 0.96);
+      stroke-width: var(--text-halo-width);
+      stroke-linejoin: round;
+      paint-order: stroke fill;
       text-anchor: middle;
       dominant-baseline: central;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.01em;
       pointer-events: none;
       transition: opacity 120ms ease, fill 120ms ease;
@@ -498,19 +611,6 @@
       stroke-dasharray: 2 4;
     }
 
-    .footer {
-      font-size: 15px;
-      fill: #68747f;
-      letter-spacing: 0.035em;
-    }
-
-    .legend-label {
-      font-size: 17px;
-      fill: #5e6973;
-      letter-spacing: 0.025em;
-      dominant-baseline: central;
-    }
-
     .interaction-note {
       font-size: 17px;
       fill: #56626d;
@@ -545,14 +645,27 @@
     }
 
     .triad-label {
-      font-size: 19px;
-      fill: rgba(31, 40, 51, 0.68);
+      visibility: hidden;
+      opacity: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: var(--triad-font-size);
+      fill: #26333f;
+      stroke: rgba(244, 241, 232, 0.98);
+      stroke-width: var(--text-halo-width);
+      stroke-linejoin: round;
+      paint-order: stroke fill;
       text-anchor: middle;
       dominant-baseline: middle;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.01em;
       pointer-events: none;
-      transition: fill 120ms ease;
+      transition: opacity 120ms ease, fill 120ms ease;
+    }
+
+    .mode-triad .triad-label-hover,
+    .mode-triad .triad-label-selected {
+      visibility: visible;
+      opacity: 1;
     }
 
     .triad-label-selected {
@@ -560,7 +673,15 @@
       font-weight: 700;
     }
 
-    @media (max-width: 1100px) {
+    .tonnetz-stage:fullscreen {
+      width: 100vw;
+      height: 100vh !important;
+      min-height: 0;
+      padding: 12px;
+      background: var(--paper);
+    }
+
+    @media (max-width: 1500px) {
       .frame {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas:
@@ -570,14 +691,41 @@
           "scores";
       }
 
-      .tonnetz-stage,
+      .tonnetz-stage {
+        height: clamp(700px, calc(100vh - 150px), 1100px);
+        min-height: 700px;
+      }
+
       .score-grid {
-        min-height: 460px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         height: auto;
+        min-height: 0;
       }
 
       .score-panel {
         min-height: 300px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .tonnetz-stage {
+        height: 680px;
+        min-height: 680px;
+      }
+
+      .tonnetz-viewbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .view-controls {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .score-grid {
+        grid-template-columns: minmax(0, 1fr);
       }
     }
   </style>
@@ -588,13 +736,26 @@
       <h1>Tonnetz - Orchestral Range Field</h1>
     </div>
     <div class="tonnetz-stage">
-      <svg id="tonnetz" viewBox="0 0 1100 840" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
-        <defs>
-          <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
-            <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#101923" flood-opacity="0.2" />
-          </filter>
-        </defs>
-      </svg>
+      <div class="tonnetz-viewbar">
+        <div id="instrumentLegend" class="instrument-legend" aria-label="Selected instrument range colors"></div>
+        <div class="view-controls" aria-label="Tonnetz view controls">
+          <button id="zoomOutGrid" type="button" aria-label="Zoom out">−</button>
+          <button id="zoomInGrid" type="button" aria-label="Zoom in">+</button>
+          <button id="fitGrid" type="button">Fit</button>
+          <button id="focusGrid" type="button" aria-pressed="false">Grid focus</button>
+          <button id="fullscreenGrid" type="button" aria-pressed="false">Fullscreen</button>
+        </div>
+      </div>
+      <div class="tonnetz-canvas">
+        <svg id="tonnetz" viewBox="0 0 1100 840" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Tonnetz triangle grid centered on middle C with selectable orchestral instrument ranges">
+          <defs>
+            <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+              <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#101923" flood-opacity="0.2" />
+            </filter>
+          </defs>
+        </svg>
+      </div>
+      <p class="tonnetz-help">Range colors identify selected instruments. Chord labels appear when you hover over or select a triangle in Triad mode. Use the mouse wheel or the controls to zoom.</p>
     </div>
     <div class="path-controls" aria-label="Path guide controls">
       <label for="interactionMode">Mode</label>
@@ -691,9 +852,19 @@
       const romanRootSelect = document.getElementById("romanRootSelect");
       const scorePreview = document.getElementById("scorePreview");
       const triadPreview = document.getElementById("triadPreview");
+      const frame = document.querySelector(".frame");
+      const tonnetzStage = document.querySelector(".tonnetz-stage");
+      const tonnetzCanvas = document.querySelector(".tonnetz-canvas");
+      const tonnetzHelp = document.querySelector(".tonnetz-help");
+      const instrumentLegend = document.getElementById("instrumentLegend");
+      const zoomOutGridButton = document.getElementById("zoomOutGrid");
+      const zoomInGridButton = document.getElementById("zoomInGrid");
+      const fitGridButton = document.getElementById("fitGrid");
+      const focusGridButton = document.getElementById("focusGrid");
+      const fullscreenGridButton = document.getElementById("fullscreenGrid");
       const width = 1100;
       const height = 840;
-      const HEADER_BAND = 100;
+      const HEADER_BAND = 12;
       const SIDE_MARGIN = 12;
       const BOTTOM_MARGIN = 25;
 
@@ -754,6 +925,190 @@
         return instrumentDefinitions.filter((instrument) => selectedInstrumentKeys().includes(instrument.key));
       }
 
+      function renderInstrumentLegend(instruments) {
+        instrumentLegend.replaceChildren();
+        if (instruments.length === 0) {
+          instrumentLegend.textContent = "No instrument ranges selected";
+          return;
+        }
+
+        instruments.forEach((instrument) => {
+          const item = document.createElement("span");
+          item.className = "legend-item";
+
+          const dot = document.createElement("span");
+          dot.className = "legend-dot";
+          dot.style.setProperty("--legend-color", `var(${instrument.accentVar})`);
+          dot.setAttribute("aria-hidden", "true");
+
+          const label = document.createElement("span");
+          label.textContent = instrument.label;
+
+          item.append(dot, label);
+          instrumentLegend.appendChild(item);
+        });
+      }
+
+      function normalizeViewBoxForCanvas(box) {
+        const canvasRect = tonnetzCanvas.getBoundingClientRect();
+        if (canvasRect.width <= 0 || canvasRect.height <= 0) {
+          return box;
+        }
+
+        const canvasAspect = canvasRect.width / canvasRect.height;
+        const boxAspect = box.width / box.height;
+        if (boxAspect > canvasAspect) {
+          const expandedHeight = box.width / canvasAspect;
+          return {
+            x: box.x,
+            y: box.y - (expandedHeight - box.height) / 2,
+            width: box.width,
+            height: expandedHeight
+          };
+        }
+
+        const expandedWidth = box.height * canvasAspect;
+        return {
+          x: box.x - (expandedWidth - box.width) / 2,
+          y: box.y,
+          width: expandedWidth,
+          height: box.height
+        };
+      }
+
+      function resizeStageToContent(contentBox) {
+        if (document.fullscreenElement === tonnetzStage) {
+          return false;
+        }
+
+        const canvasRect = tonnetzCanvas.getBoundingClientRect();
+        const stageRect = tonnetzStage.getBoundingClientRect();
+        if (canvasRect.width <= 0 || contentBox.width <= 0 || contentBox.height <= 0) {
+          return false;
+        }
+
+        const nonCanvasHeight = Math.max(0, stageRect.height - canvasRect.height);
+        const contentAspect = contentBox.width / contentBox.height;
+        const desiredCanvasHeight = canvasRect.width / contentAspect;
+        const maximumHeight = frame.classList.contains("grid-focused") ? 1800 : 1500;
+        const desiredStageHeight = Math.round(
+          Math.min(maximumHeight, Math.max(680, desiredCanvasHeight + nonCanvasHeight))
+        );
+
+        if (Math.abs(stageRect.height - desiredStageHeight) < 2) {
+          return false;
+        }
+
+        tonnetzStage.style.height = `${desiredStageHeight}px`;
+        return true;
+      }
+
+      function updateSvgTypography() {
+        const canvasRect = tonnetzCanvas.getBoundingClientRect();
+        if (canvasRect.width <= 0 || canvasRect.height <= 0) {
+          return;
+        }
+
+        const scale = Math.min(
+          canvasRect.width / currentViewBox.width,
+          canvasRect.height / currentViewBox.height
+        );
+        if (!Number.isFinite(scale) || scale <= 0) {
+          return;
+        }
+
+        const noteSize = Math.max(22, 21 / scale);
+        const triadSize = Math.max(19, 18 / scale);
+        const haloWidth = Math.max(2.5, 3 / scale);
+        svg.style.setProperty("--note-font-size", `${noteSize}px`);
+        svg.style.setProperty("--triad-font-size", `${triadSize}px`);
+        svg.style.setProperty("--text-halo-width", `${haloWidth}px`);
+      }
+
+      function applyViewBox(box) {
+        currentViewBox = { ...box };
+        svg.setAttribute(
+          "viewBox",
+          `${box.x.toFixed(2)} ${box.y.toFixed(2)} ${box.width.toFixed(2)} ${box.height.toFixed(2)}`
+        );
+        updateSvgTypography();
+      }
+
+      function fitGraphView() {
+        if (nodes.size === 0) {
+          fittedViewBox = normalizeViewBoxForCanvas({ x: 0, y: 0, width, height });
+          currentZoom = 1;
+          applyViewBox(fittedViewBox);
+          return;
+        }
+
+        const graphNodes = Array.from(nodes.values());
+        const minX = Math.min(...graphNodes.map((node) => node.x));
+        const maxX = Math.max(...graphNodes.map((node) => node.x));
+        const minY = Math.min(...graphNodes.map((node) => node.y));
+        const maxY = Math.max(...graphNodes.map((node) => node.y));
+        const maximumRingCount = Math.max(...graphNodes.map((node) => node.matchingInstruments.length), 0);
+        const ringExtent = RADIUS + (maximumRingCount > 0 ? 3.1 + (maximumRingCount - 1) * 2.2 : 0);
+        const padding = ringExtent + FIT_PADDING;
+        const contentBox = {
+          x: minX - padding,
+          y: minY - padding,
+          width: maxX - minX + padding * 2,
+          height: maxY - minY + padding * 2
+        };
+
+        if (resizeStageToContent(contentBox)) {
+          scheduleViewFit();
+        }
+
+        fittedViewBox = normalizeViewBoxForCanvas(contentBox);
+        currentZoom = 1;
+        applyViewBox(fittedViewBox);
+      }
+
+      function scheduleViewFit() {
+        if (viewFitFrame !== null) {
+          return;
+        }
+        viewFitFrame = window.requestAnimationFrame(() => {
+          viewFitFrame = null;
+          fitGraphView();
+        });
+      }
+
+      function zoomGrid(factor, anchorClientX = null, anchorClientY = null) {
+        const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, currentZoom * factor));
+        if (Math.abs(nextZoom - currentZoom) < 0.001) {
+          return;
+        }
+
+        let anchorX = currentViewBox.x + currentViewBox.width / 2;
+        let anchorY = currentViewBox.y + currentViewBox.height / 2;
+        if (anchorClientX !== null && anchorClientY !== null) {
+          const point = svg.createSVGPoint();
+          point.x = anchorClientX;
+          point.y = anchorClientY;
+          const screenMatrix = svg.getScreenCTM();
+          if (screenMatrix) {
+            const svgPoint = point.matrixTransform(screenMatrix.inverse());
+            anchorX = svgPoint.x;
+            anchorY = svgPoint.y;
+          }
+        }
+
+        const anchorRatioX = (anchorX - currentViewBox.x) / currentViewBox.width;
+        const anchorRatioY = (anchorY - currentViewBox.y) / currentViewBox.height;
+        const nextWidth = fittedViewBox.width / nextZoom;
+        const nextHeight = fittedViewBox.height / nextZoom;
+        currentZoom = nextZoom;
+        applyViewBox({
+          x: anchorX - nextWidth * anchorRatioX,
+          y: anchorY - nextHeight * anchorRatioY,
+          width: nextWidth,
+          height: nextHeight
+        });
+      }
+
       const GRID_MIN_MIDI = Math.min(...instrumentDefinitions.map((instrument) => instrument.minMidi));
       const GRID_MAX_MIDI = Math.max(...instrumentDefinitions.map((instrument) => instrument.maxMidi));
 
@@ -762,6 +1117,14 @@
       const SPACING = 95;
       const SQRT3 = Math.sqrt(3);
       const RADIUS = 24;
+      const FIT_PADDING = 28;
+      const MIN_ZOOM = 0.7;
+      const MAX_ZOOM = 4;
+      let fittedViewBox = { x: 0, y: 0, width, height };
+      let currentViewBox = { ...fittedViewBox };
+      let currentZoom = 1;
+      let viewFitFrame = null;
+      let observedCanvasWidth = 0;
 
       const pitchNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
       const romanNumeralsByInterval = ["I", "bII", "II", "bIII", "III", "IV", "bV", "V", "bVI", "VI", "bVII", "VII"];
@@ -1219,7 +1582,11 @@
 
       function bindTriangleInteractions() {
         triangleVisuals.forEach((triangleVisual) => {
-          triangleVisual.polygon.addEventListener("pointerdown", (event) => {
+          const setHovered = (isHovered) => {
+            triangleVisual.triadLabel.classList.toggle("triad-label-hover", isHovered);
+          };
+
+          const toggleTriangle = (event) => {
             if (currentInteractionMode() !== "triad" && !event.shiftKey) {
               interactionNote.textContent = "Switch to Triad mode (or Shift-click) to add a triangle to the triad staff.";
               return;
@@ -1236,6 +1603,18 @@
             }
 
             updateTriadView();
+          };
+
+          triangleVisual.polygon.addEventListener("pointerdown", toggleTriangle);
+          triangleVisual.polygon.addEventListener("pointerenter", () => setHovered(true));
+          triangleVisual.polygon.addEventListener("pointerleave", () => setHovered(false));
+          triangleVisual.polygon.addEventListener("focus", () => setHovered(true));
+          triangleVisual.polygon.addEventListener("blur", () => setHovered(false));
+          triangleVisual.polygon.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              toggleTriangle(event);
+            }
           });
         });
       }
@@ -1835,6 +2214,10 @@
         activeMode = mode;
         hitGroup.style.pointerEvents = mode === "triad" ? "none" : "";
         svg.classList.toggle("mode-triad", mode === "triad");
+        triangleVisuals.forEach((triangleVisual) => {
+          triangleVisual.polygon.setAttribute("tabindex", mode === "triad" ? "0" : "-1");
+          triangleVisual.polygon.setAttribute("aria-disabled", String(mode !== "triad"));
+        });
         updateInteractionMessage();
       }
 
@@ -1902,9 +2285,11 @@
         const selectedSet = new Set(selectedTriangleIds);
 
         triangleVisuals.forEach((triangleVisual) => {
+          const isSelected = selectedSet.has(triangleVisual.id);
           triangleVisual.triadLabel.textContent = formatTriadLabel(triangleVisual.nodeKeys);
-          triangleVisual.polygon.classList.toggle("tri-face-selected", selectedSet.has(triangleVisual.id));
-          triangleVisual.triadLabel.classList.toggle("triad-label-selected", selectedSet.has(triangleVisual.id));
+          triangleVisual.polygon.classList.toggle("tri-face-selected", isSelected);
+          triangleVisual.polygon.setAttribute("aria-pressed", String(isSelected));
+          triangleVisual.triadLabel.classList.toggle("triad-label-selected", isSelected);
         });
 
         triadPlaybackEvents = selectedTriangleIds
@@ -2038,6 +2423,55 @@
         interactionNote.textContent = "Playback stopped.";
       });
 
+      zoomOutGridButton.addEventListener("click", () => zoomGrid(1 / 1.25));
+      zoomInGridButton.addEventListener("click", () => zoomGrid(1.25));
+      fitGridButton.addEventListener("click", fitGraphView);
+
+      focusGridButton.addEventListener("click", () => {
+        const isFocused = frame.classList.toggle("grid-focused");
+        focusGridButton.setAttribute("aria-pressed", String(isFocused));
+        focusGridButton.textContent = isFocused ? "Show scores" : "Grid focus";
+        window.setTimeout(fitGraphView, 0);
+      });
+
+      fullscreenGridButton.addEventListener("click", async () => {
+        try {
+          if (document.fullscreenElement === tonnetzStage) {
+            await document.exitFullscreen();
+          } else {
+            await tonnetzStage.requestFullscreen();
+          }
+        } catch (error) {
+          console.error("Unable to change Tonnetz fullscreen state", error);
+          tonnetzHelp.textContent = "Fullscreen could not be opened in this browser. The other view controls remain available.";
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        const isFullscreen = document.fullscreenElement === tonnetzStage;
+        fullscreenGridButton.setAttribute("aria-pressed", String(isFullscreen));
+        fullscreenGridButton.textContent = isFullscreen ? "Exit fullscreen" : "Fullscreen";
+        window.setTimeout(fitGraphView, 0);
+      });
+
+      svg.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        zoomGrid(event.deltaY < 0 ? 1.18 : 1 / 1.18, event.clientX, event.clientY);
+      }, { passive: false });
+
+      const viewResizeObserver = new ResizeObserver((entries) => {
+        const canvasWidth = entries[0]?.contentRect.width ?? tonnetzCanvas.clientWidth;
+        const widthChanged = Math.abs(canvasWidth - observedCanvasWidth) >= 1;
+        observedCanvasWidth = canvasWidth;
+        if (currentZoom === 1 && widthChanged) {
+          scheduleViewFit();
+        } else {
+          updateSvgTypography();
+        }
+      });
+      viewResizeObserver.observe(tonnetzCanvas);
+      window.addEventListener("resize", scheduleViewFit);
+
       window.__tonnetzRenderGraph = function () {
         const defs = svg.querySelector("defs");
         svg.replaceChildren(defs);
@@ -2058,6 +2492,7 @@
         nodes = new Map();
 
         const activeSelectedInstruments = activeInstruments();
+        renderInstrumentLegend(activeSelectedInstruments);
         if (activeSelectedInstruments.length === 0) {
           selectedNodeKeys = [];
           activePathKeys = [];
@@ -2159,6 +2594,10 @@
           const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
           polygon.setAttribute("points", points);
           polygon.setAttribute("class", "tri-face");
+          polygon.setAttribute("role", "button");
+          polygon.setAttribute("tabindex", currentInteractionMode() === "triad" ? "0" : "-1");
+          polygon.setAttribute("aria-disabled", String(currentInteractionMode() !== "triad"));
+          polygon.setAttribute("aria-pressed", "false");
           triangleGroup.appendChild(polygon);
 
           const uniqueSortedKeys = [...triangle.nodeKeys]
@@ -2172,6 +2611,7 @@
           triadLabel.setAttribute("y", centroidY + 0.3);
           triadLabel.setAttribute("class", "triad-label");
           triadLabel.textContent = formatTriadLabel(uniqueSortedKeys);
+          polygon.setAttribute("aria-label", `Select ${triadLabel.textContent} triad`);
           triadTextGroup.appendChild(triadLabel);
 
           const record = {
@@ -2200,7 +2640,7 @@
             const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             ring.setAttribute("cx", n.x);
             ring.setAttribute("cy", n.y);
-            ring.setAttribute("r", RADIUS + 3.1 + idx * 2.9);
+            ring.setAttribute("r", RADIUS + 3.1 + idx * 2.2);
             ring.setAttribute("class", `range-ring ${instrument.colorClass}`);
             rangeGroup.appendChild(ring);
             ringElements.push(ring);
@@ -2239,32 +2679,6 @@
         interactionNote.setAttribute("aria-hidden", "true");
         textGroup.appendChild(interactionNote);
 
-        const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        const legendItems = activeSelectedInstruments.length > 0 ? activeSelectedInstruments : instrumentDefinitions.slice(0, 4);
-        legendItems.forEach((instrument, index) => {
-          const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          const row = Math.floor(index / 4);
-          const col = index % 4;
-          ring.setAttribute("cx", width - 560 + col * 132);
-          ring.setAttribute("cy", 58 + row * 24);
-          ring.setAttribute("r", 10);
-          ring.setAttribute("class", `range-ring ${instrument.colorClass}`);
-          legend.appendChild(ring);
-
-          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          label.setAttribute("x", width - 543 + col * 132);
-          label.setAttribute("y", 58 + row * 24);
-          label.setAttribute("class", "legend-label");
-          label.textContent = instrument.label;
-          legend.appendChild(label);
-        });
-
-        const footer = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        footer.setAttribute("x", 52);
-        footer.setAttribute("y", height - 22);
-        footer.setAttribute("class", "footer");
-        footer.textContent = "Overlap notes show all selected instrument ring colors. Route and triad staves are rendered separately.";
-
         svg.appendChild(triangleGroup);
         svg.appendChild(triadTextGroup);
         svg.appendChild(edgeGroup);
@@ -2272,16 +2686,18 @@
         svg.appendChild(rangeGroup);
         svg.appendChild(textGroup);
         svg.appendChild(hitGroup);
-        svg.appendChild(legend);
-        svg.appendChild(footer);
 
         nodeVisuals.forEach((visual) => {
           visualByKey.set(visual.key, visual);
         });
 
-        maxRadius = Math.max(...Array.from(nodes.values(), (node) => Math.hypot(node.x - CENTER_X, node.y - CENTER_Y)));
+        maxRadius = nodes.size > 0
+          ? Math.max(...Array.from(nodes.values(), (node) => Math.hypot(node.x - CENTER_X, node.y - CENTER_Y)))
+          : 0;
+        fitGraphView();
         bindNodeInteractions();
         bindTriangleInteractions();
+        setMode(currentInteractionMode());
         updatePathView();
         updateTriadView();
       };
