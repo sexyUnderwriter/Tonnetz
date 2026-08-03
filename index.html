@@ -645,8 +645,8 @@
     }
 
     .triad-label {
-      visibility: hidden;
-      opacity: 0;
+      visibility: visible;
+      opacity: 1;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: var(--triad-font-size);
       fill: #26333f;
@@ -660,12 +660,6 @@
       letter-spacing: 0.01em;
       pointer-events: none;
       transition: opacity 120ms ease, fill 120ms ease;
-    }
-
-    .mode-triad .triad-label-hover,
-    .mode-triad .triad-label-selected {
-      visibility: visible;
-      opacity: 1;
     }
 
     .triad-label-selected {
@@ -755,7 +749,7 @@
           </defs>
         </svg>
       </div>
-      <p class="tonnetz-help">Range colors identify selected instruments. Chord labels appear when you hover over or select a triangle in Triad mode. Use the mouse wheel or the controls to zoom.</p>
+      <p class="tonnetz-help">Range colors identify selected instruments. Chord labels appear inside each triangle. Use the mouse wheel or the controls to zoom.</p>
     </div>
     <div class="path-controls" aria-label="Path guide controls">
       <label for="interactionMode">Mode</label>
